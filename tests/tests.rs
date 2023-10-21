@@ -158,3 +158,10 @@ pub fn test_get_by_idx() -> Result<(), String> {
     assert_eq!(t.get_by_idx(50), None.as_ref());
     Ok(())
 }
+
+#[test]
+pub fn test_len() -> Result<(), String> {
+    let t = initialize_table(1, 1);
+    assert_eq!(t.len(), 5);
+    Ok(())
+}

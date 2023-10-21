@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use serde::ser::{Serialize, Serializer, SerializeSeq};
+use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 /// Allows a snake-filled table of arbitrary size
 /// The final row does not need to be filled
@@ -202,10 +202,22 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         }
         ret
     }
+
+    pub fn len(&self) -> usize {
+        let ret: usize = self.size.rows * self.size.columns;
+        if ret == 0 { 0 }
+        else {
+            let num_nones: usize = self.rows[self.size.rows-1]
+                .iter()
+                .filter(|&x| x.is_none())
+                .count();
+            ret.checked_sub(num_nones).unwrap()
+        }
+    }
 }
 
 impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
-    fn serialize<S>(&self, serializer:S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
