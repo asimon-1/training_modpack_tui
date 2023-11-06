@@ -1,5 +1,6 @@
-use ratatui::{backend::Backend, layout::Rect, Frame};
-use serde::ser::{SerializeSeq, SerializeStruct, Serializer};
+use itertools::Itertools;
+use ratatui::{backend::Backend, layout::Rect, prelude::*, widgets::Paragraph, Frame};
+use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
 
 mod gauge;
@@ -11,9 +12,10 @@ pub use crate::list::*;
 pub use crate::table::*;
 
 #[allow(dead_code)]
-static NX_TUI_WIDTH: u16 = 240;
-static NX_TAB_COLUMNS: usize = 4; // TODO!() I guessed on these, need to verify
-static NX_SUBMENU_COLUMNS: usize = 4; // TODO!() I guessed on these, need to verify
+// const NX_TUI_WIDTH: u16 = 240;
+// const NX_TAB_COLUMNS: usize = 4;
+const NX_SUBMENU_ROWS: usize = 8;
+const NX_SUBMENU_COLUMNS: usize = 4;
 
 #[derive(PartialEq, Serialize)]
 pub enum AppPage {
@@ -24,7 +26,7 @@ pub enum AppPage {
 }
 
 // Menu structure is:
-// App <StatefulList<Tab>>
+// App <StatefulTable<Tab>>
 // │
 // └─ Tab <StatefulTable<Submenu>>
 //    │
@@ -36,25 +38,25 @@ pub enum AppPage {
 //       │
 //       └─ Option<Slider>
 
-pub struct App {
-    pub tabs: StatefulList<Tab>,
+pub struct App<'a> {
+    pub tabs: StatefulTable<Tab<'a>, 1, 10>, // Note that if you go to 11 there's a stack overflow...
     pub page: AppPage,
 }
 
-impl App {
-    pub fn new() -> App {
+impl<'a> App<'a> {
+    pub fn new() -> App<'a> {
         App {
-            tabs: StatefulList::with_items(Vec::new()),
+            tabs: StatefulTable::new(),
             page: AppPage::SUBMENU,
         }
     }
 
-    pub fn to_json(self: &App) -> String {
-        serde_json::to_string(self).expect("Could not serialize the menu to JSON!")
+    pub fn to_json(self: &App<'a>) -> String {
+        serde_json::to_string(&self).expect("Could not serialize the menu to JSON!")
     }
 }
 
-impl Serialize for App {
+impl<'a> Serialize for App<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -64,57 +66,77 @@ impl Serialize for App {
 }
 
 #[allow(dead_code)]
-#[derive(Clone)]
-pub struct Tab {
-    title: String,
-    id: String,
-    submenus: StatefulTable<SubMenu>,
+#[derive(Clone, Copy)]
+pub struct Tab<'a> {
+    title: &'a str,
+    id: &'a str,
+    submenus: StatefulTable<SubMenu<'a>, 1, 15>,
 }
 
-impl Serialize for Tab {
+impl<'a> Serialize for Tab<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        self.submenus.serialize(serializer)
+        let mut map = serializer.serialize_map(Some(self.submenus.len()))?;
+        for submenu in self.submenus {
+            map.serialize_entry(&submenu.title, &submenu)?;
+        }
+        map.end()
     }
 }
 
 #[allow(dead_code)]
-#[derive(Clone)]
-pub struct SubMenu {
-    title: String,
-    id: String,
-    help_text: String,
+#[derive(Clone, Copy)]
+pub struct SubMenu<'a> {
+    title: &'a str,
+    id: &'a str,
+    help_text: &'a str,
     type_: SubMenuType,
-    toggles: StatefulTable<Toggle>,
+    toggles: StatefulTable<Toggle<'a>, NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS>,
     slider: Option<Slider>,
 }
 
-impl Serialize for SubMenu {
+impl<'a> Serialize for SubMenu<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
         // TODO! Match on SubMenuType and Impl for Slider
-        let mut seq = serializer.serialize_seq(Some(self.toggles.len()))?;
-        for e in self.toggles.flatten().iter() {
-            seq.serialize_element(&e)?;
-        }
-        seq.end()
+        self.toggles.serialize(serializer)
     }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Copy, Serialize)]
 pub enum SubMenuType {
-    TOGGLE_SINGLE,
-    TOGGLE_MULTIPLE,
-    SLIDER,
-    NONE,
+    ToggleSingle,
+    ToggleMultiple,
+    Slider,
+    None,
 }
 
 #[allow(unused_variables)]
-pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {}
+pub fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
+    let layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .split(f.size());
+    let tab_area = layout[0];
+    let menu_area = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(3); 5]) // TODO
+        .split(layout[1])
+        .iter()
+        .map(|&area| {
+            Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints([Constraint::Percentage(25); 4]) // TODO
+                .split(area)
+                .to_vec()
+        })
+        .collect_vec();
+    f.render_widget(Paragraph::new("Title!"), tab_area);
+}
 
 #[allow(dead_code, unused_variables)]
 fn render_submenu_page<B: Backend>(
@@ -145,14 +167,14 @@ fn render_toggle_page<B: Backend>(
 
 /////////////////////////// TODO!() remove stuff below this line
 
-#[derive(Clone)]
-pub struct Toggle {
-    pub toggle_title: String,
+#[derive(Clone, Copy)]
+pub struct Toggle<'a> {
+    pub toggle_title: &'a str,
     pub toggle_value: u8,
     pub toggle_max: u8,
 }
 
-impl Serialize for Toggle {
+impl Serialize for Toggle<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -161,7 +183,7 @@ impl Serialize for Toggle {
     }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Copy, Serialize)]
 pub struct Slider {
     pub selected_min: u32,
     pub selected_max: u32,
@@ -169,14 +191,14 @@ pub struct Slider {
     pub abs_max: u32,
 }
 
-pub fn create_app() -> App {
+pub fn create_app<'a>() -> App<'a> {
     let a_button = Toggle {
-        toggle_title: "A Button".to_string(),
+        toggle_title: "A Button",
         toggle_value: 0,
         toggle_max: 1,
     };
     let b_button = Toggle {
-        toggle_title: "B Button".to_string(),
+        toggle_title: "B Button",
         toggle_value: 1,
         toggle_max: 1,
     };
@@ -184,27 +206,68 @@ pub fn create_app() -> App {
     let mut app = App::new();
     let mut button_tab_submenus: Vec<SubMenu> = Vec::new();
     button_tab_submenus.push(SubMenu {
-        title: "Menu Open Start Press".to_string(),
-        id: "menu_open_start_press".to_string(),
-        help_text: "Help".to_string(),
-        type_: SubMenuType::TOGGLE_SINGLE,
-        toggles: StatefulTable::with_items(vec![a_button, b_button], NX_SUBMENU_COLUMNS),
+        title: "Menu Open Start Press",
+        id: "menu_open_start_press",
+        help_text: "Help",
+        type_: SubMenuType::ToggleSingle,
+        toggles: StatefulTable::with_items(vec![a_button, b_button]),
         slider: None,
     });
     button_tab_submenus.push(SubMenu {
-        title: "Save State Save".to_string(),
-        id: "save_state_save".to_string(),
-        help_text: "Save State Save: Hold any one button and press the others to trigger"
-            .to_string(),
-        type_: SubMenuType::TOGGLE_MULTIPLE,
-        toggles: StatefulTable::with_items(Vec::new(), NX_SUBMENU_COLUMNS),
+        title: "Save State Save",
+        id: "save_state_save",
+        help_text: "Save State Save: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
         slider: None,
     });
-    let mut button_tab = Tab {
-        id: "button".to_string(),
-        title: "Button Config".to_string(),
-        submenus: StatefulTable::with_items(button_tab_submenus, NX_TAB_COLUMNS),
+
+    button_tab_submenus.push(SubMenu {
+        title: "Menu Open Start Press",
+        id: "menu_open_start_press",
+        help_text: "Menu Open Start Press: Hold start or press minus to open the mod menu. To open the original menu, press start.\nThe default menu open option is always available as Hold DPad Up + Press B.",
+        type_: SubMenuType::ToggleSingle,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Save State Save",
+        id: "save_state_save",
+        help_text: "Save State Save: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Save State Load",
+        id: "save_state_load",
+        help_text: "Save State Load: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Input Record",
+        id: "input_record",
+        help_text: "Input Record: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Input Playback",
+        id: "input_playback",
+        help_text: "Input Playback: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+
+    let button_tab = Tab {
+        id: "button",
+        title: "Button Config",
+        submenus: StatefulTable::with_items(button_tab_submenus),
     };
-    app.tabs = StatefulList::with_items(vec![button_tab]);
+    app.tabs = StatefulTable::with_items(vec![button_tab]);
     app
 }

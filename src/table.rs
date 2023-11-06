@@ -1,12 +1,11 @@
-use itertools::Itertools;
-use serde::ser::{Serialize, SerializeSeq, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Allows a snake-filled table of arbitrary size
 /// The final row does not need to be filled
 /// [ a , b , c , d ]
 /// [ e, f, g, h, i ]
 /// [ j, k          ]
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Deserialize)]
 pub struct TableState {
     pub row: usize,
     pub column: usize,
@@ -22,92 +21,105 @@ impl TableState {
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
-pub struct TableSize {
-    pub rows: usize,
-    pub columns: usize,
-}
-
-impl TableSize {
-    pub fn new() -> TableSize {
-        TableSize {
-            rows: 0,
-            columns: 0,
-        }
-    }
-    pub fn new_with(rows: usize, columns: usize) -> TableSize {
-        TableSize { rows, columns }
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-pub struct StatefulTable<T: Clone + Serialize> {
+pub struct StatefulTable<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> {
     pub state: TableState,
-    pub rows: Vec<Vec<Option<T>>>,
-    pub size: TableSize,
+    pub items: [[Option<T>; COLS]; ROWS],
 }
 
-impl<T: Clone + Serialize> IntoIterator for StatefulTable<T> {
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.flatten().into_iter()
+// Size-related functions
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
+    StatefulTable<T, ROWS, COLS>
+{
+    pub fn rows(&self) -> usize {
+        ROWS
+    }
+    pub fn cols(&self) -> usize {
+        COLS
+    }
+    pub fn len(&self) -> usize {
+        self.items
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .map(|item| if item.is_some() { 1 } else { 0 })
+                    .sum::<usize>()
+            })
+            .sum()
+    }
+    pub fn full_len(&self) -> usize {
+        ROWS * COLS
+    }
+    pub fn as_vec(&self) -> Vec<T> {
+        let mut v = Vec::new();
+        for row in self.items.iter() {
+            for item in row.iter() {
+                if let Some(i) = item {
+                    v.push(*i);
+                }
+            }
+        }
+        v
     }
 }
 
-impl<T: Clone + Serialize> StatefulTable<T> {
-    /// Turn a vec like [a, b, c] into a table like
-    /// [a, b]
-    /// [c,  ]
-    pub fn with_items(i: Vec<T>, columns: usize) -> StatefulTable<T> {
-        let rows: Vec<Vec<Option<T>>> = i
-            .into_iter()
-            .chunks(columns)
-            .into_iter()
-            .map(|chunk| chunk.into_iter().map(|y| Some(y)).collect_vec())
-            .map(|mut row| {
-                // Fill the final row with None's until its len is `columns`
-                for _ in 0..(columns - row.len()) {
-                    row.push(None);
-                }
-                row
-            })
-            .collect_vec();
-        let size = TableSize {
-            rows: rows.len(),
-            columns: columns,
-        };
-        StatefulTable {
+// Associated Functions
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
+    StatefulTable<T, ROWS, COLS>
+{
+    pub fn new() -> Self {
+        Self {
             state: TableState::new(),
-            rows: rows,
-            size: size,
+            items: [[None; COLS]; ROWS],
         }
     }
+    pub fn with_items(v: Vec<T>) -> Self {
+        let mut table: Self = Self::new();
+        if v.len() > ROWS * COLS {
+            panic!(
+                "Cannot create StatefulTable; too many items for size {}x{}: {}",
+                ROWS,
+                COLS,
+                v.len()
+            );
+        } else {
+            for (i, item) in v.iter().enumerate() {
+                table.items[i.div_euclid(COLS)][i.rem_euclid(COLS)] = Some(*item);
+            }
+            table
+        }
+    }
+}
+
+// State Functions
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
+    StatefulTable<T, ROWS, COLS>
+{
     pub fn select(&mut self, row: usize, column: usize) {
-        assert!(column < self.size.columns);
-        assert!(row < self.size.rows);
+        assert!(column < COLS);
+        assert!(row < ROWS);
         self.state = TableState { row, column };
     }
 
     pub fn get_selected(&self) -> Option<&T> {
-        self.rows[self.state.row][self.state.column].as_ref()
+        self.items[self.state.row][self.state.column].as_ref()
     }
 
     pub fn get(&self, row: usize, column: usize) -> Option<&T> {
-        if row >= self.size.rows || column >= self.size.columns {
+        if row >= ROWS || column >= COLS {
             None
         } else {
-            self.rows[row][column].as_ref()
+            self.items[row][column].as_ref()
         }
     }
 
     pub fn get_by_idx(&self, idx: usize) -> Option<&T> {
-        let row = idx.div_euclid(self.size.columns);
-        let col = idx.rem_euclid(self.size.columns);
+        let row = idx.div_euclid(COLS);
+        let col = idx.rem_euclid(COLS);
         self.get(row, col)
     }
 
     pub fn next_row(&mut self) {
-        if self.state.row == self.size.rows - 1 {
+        if self.state.row == ROWS - 1 {
             // Wrap around
             self.state.row = 0;
         } else {
@@ -124,12 +136,12 @@ impl<T: Clone + Serialize> StatefulTable<T> {
 
     pub fn prev_row(&mut self) {
         if self.state.row == 0 {
-            self.state.row = self.size.rows - 1;
+            self.state.row = ROWS - 1;
         } else {
             self.state.row += 1;
         }
-        if self.state.row >= self.size.rows {
-            self.state.row -= self.size.rows;
+        if self.state.row >= ROWS {
+            self.state.row -= ROWS;
         }
     }
 
@@ -141,7 +153,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
     }
 
     pub fn next_col(&mut self) {
-        if self.state.column == self.size.columns - 1 {
+        if self.state.column == COLS - 1 {
             self.state.column = 0;
         } else {
             self.state.column += 1;
@@ -157,7 +169,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
 
     pub fn prev_col(&mut self) {
         if self.state.column == 0 {
-            self.state.column = self.size.columns - 1;
+            self.state.column = COLS - 1;
         } else {
             self.state.column -= 1;
         }
@@ -182,7 +194,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
     /// [[d],    ,    ]
     pub fn carriage_return(&mut self) {
         assert!(
-            self.rows[self.state.row].iter().any(|x| x.is_some()),
+            self.items[self.state.row].iter().any(|x| x.is_some()),
             "Carriage return called on an empty row!"
         );
         if self.get_selected().is_none() {
@@ -190,42 +202,38 @@ impl<T: Clone + Serialize> StatefulTable<T> {
             self.carriage_return();
         }
     }
-
-    pub fn flatten(&self) -> Vec<T> {
-        let mut ret: Vec<T> = Vec::new();
-        for row in 0..self.size.rows {
-            for column in 0..self.size.columns {
-                if let Some(x) = self.get(row, column) {
-                    ret.push(x.clone())
-                }
-            }
-        }
-        ret
-    }
-
-    pub fn len(&self) -> usize {
-        let ret: usize = self.size.rows * self.size.columns;
-        if ret == 0 { 0 }
-        else {
-            let num_nones: usize = self.rows[self.size.rows-1]
-                .iter()
-                .filter(|&x| x.is_none())
-                .count();
-            ret.checked_sub(num_nones).unwrap()
-        }
-    }
 }
 
-impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> Serialize
+    for StatefulTable<T, ROWS, COLS>
+{
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let flat = self.flatten();
-        let mut seq = serializer.serialize_seq(Some(flat.len()))?;
-        for e in flat.iter() {
-            seq.serialize_element(e)?;
-        }
-        seq.end()
+        let flat: Vec<T> = self.as_vec();
+        flat.serialize(serializer)
+    }
+}
+
+impl<'de, T: Copy + Clone + Serialize + Deserialize<'de>, const ROWS: usize, const COLS: usize>
+    Deserialize<'de> for StatefulTable<T, ROWS, COLS>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let items: Vec<T> = Vec::deserialize(deserializer)?;
+        Ok(StatefulTable::with_items(items))
+    }
+}
+
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> IntoIterator
+    for StatefulTable<T, ROWS, COLS>
+{
+    type Item = T;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_vec().into_iter()
     }
 }

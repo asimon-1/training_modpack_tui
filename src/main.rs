@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    event::{self, EnableMouseCapture, Event, KeyCode},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -17,8 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let tick_rate = Duration::from_millis(250);
     let res = run_app(&mut terminal, app, tick_rate);
-    restore_terminal(terminal);
-    
+    restore_terminal(terminal)?;
 
     if let Err(err) = res {
         println!("Error: {:?}", err)
@@ -38,7 +37,9 @@ fn setup_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn Er
     Ok(terminal)
 }
 
-fn restore_terminal(mut terminal: Terminal<CrosstermBackend<io::Stdout>>) -> Result<(), Box<dyn Error>> {
+fn restore_terminal(
+    mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
+) -> Result<(), Box<dyn Error>> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
@@ -52,7 +53,7 @@ fn run_app<B: ratatui::backend::Backend>(
 ) -> io::Result<String> {
     let mut last_tick = Instant::now();
     loop {
-        terminal.draw(|f| training_mod_tui_2::ui(f, &mut app).clone())?;
+        terminal.draw(|f| training_mod_tui_2::ui(f, &mut app))?;
         let menu_json = app.to_json();
 
         let timeout = tick_rate
