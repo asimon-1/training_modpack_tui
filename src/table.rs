@@ -1,11 +1,4 @@
-use itertools::Itertools;
-use ratatui::{
-    buffer::Buffer,
-    layout::Rect,
-    prelude::*,
-    widgets::{Paragraph, Widget},
-};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 
 /// Allows a snake-filled table of arbitrary size
 /// The final row does not need to be filled
@@ -27,22 +20,18 @@ impl TableState {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
-pub struct StatefulTable<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> {
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct StatefulTable<T: Clone + Serialize> {
     pub state: TableState,
-    pub items: [[Option<T>; COLS]; ROWS],
+    pub items: Vec<Vec<Option<T>>>,
+    pub rows: usize,
+    pub cols: usize,
 }
 
 // Size-related functions
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
-    StatefulTable<T, ROWS, COLS>
+impl<T: Clone + Serialize>
+    StatefulTable<T>
 {
-    pub fn rows(&self) -> usize {
-        ROWS
-    }
-    pub fn cols(&self) -> usize {
-        COLS
-    }
     pub fn len(&self) -> usize {
         self.items
             .iter()
@@ -54,14 +43,14 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
             .sum()
     }
     pub fn full_len(&self) -> usize {
-        ROWS * COLS
+        self.rows * self.cols
     }
     pub fn as_vec(&self) -> Vec<T> {
-        let mut v = Vec::new();
+        let mut v = Vec::with_capacity(self.len());
         for row in self.items.iter() {
             for item in row.iter() {
                 if let Some(i) = item {
-                    v.push(*i);
+                    v.push(i.clone());
                 }
             }
         }
@@ -70,27 +59,29 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
 }
 
 // Associated Functions
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
-    StatefulTable<T, ROWS, COLS>
+impl<T: Clone + Serialize>
+    StatefulTable<T>
 {
-    pub fn new() -> Self {
+    pub fn new(rows: usize, cols: usize) -> Self {
         Self {
             state: TableState::new(),
-            items: [[None; COLS]; ROWS],
+            items: vec![vec![None; cols]; rows],
+            rows: rows,
+            cols: cols,
         }
     }
-    pub fn with_items(v: Vec<T>) -> Self {
-        let mut table: Self = Self::new();
-        if v.len() > ROWS * COLS {
+    pub fn with_items(rows: usize, cols: usize, v: Vec<T>) -> Self {
+        let mut table: Self = Self::new(rows, cols);
+        if v.len() > rows * cols {
             panic!(
                 "Cannot create StatefulTable; too many items for size {}x{}: {}",
-                ROWS,
-                COLS,
+                rows,
+                cols,
                 v.len()
             );
         } else {
             for (i, item) in v.iter().enumerate() {
-                table.items[i.div_euclid(COLS)][i.rem_euclid(COLS)] = Some(*item);
+                table.items[i.div_euclid(cols)][i.rem_euclid(cols)] = Some(item.clone());
             }
             table
         }
@@ -98,12 +89,12 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
 }
 
 // State Functions
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
-    StatefulTable<T, ROWS, COLS>
+impl<T: Clone + Serialize>
+    StatefulTable<T>
 {
     pub fn select(&mut self, row: usize, column: usize) {
-        assert!(column < COLS);
-        assert!(row < ROWS);
+        assert!(column < self.cols);
+        assert!(row < self.rows);
         self.state = TableState { row, column };
     }
 
@@ -112,7 +103,7 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
     }
 
     pub fn get(&self, row: usize, column: usize) -> Option<&T> {
-        if row >= ROWS || column >= COLS {
+        if row >= self.rows || column >= self.cols {
             None
         } else {
             self.items[row][column].as_ref()
@@ -120,13 +111,13 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
     }
 
     pub fn get_by_idx(&self, idx: usize) -> Option<&T> {
-        let row = idx.div_euclid(COLS);
-        let col = idx.rem_euclid(COLS);
+        let row = idx.div_euclid(self.cols);
+        let col = idx.rem_euclid(self.cols);
         self.get(row, col)
     }
 
     pub fn next_row(&mut self) {
-        if self.state.row == ROWS - 1 {
+        if self.state.row == self.rows - 1 {
             // Wrap around
             self.state.row = 0;
         } else {
@@ -143,12 +134,12 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
 
     pub fn prev_row(&mut self) {
         if self.state.row == 0 {
-            self.state.row = ROWS - 1;
+            self.state.row = self.rows - 1;
         } else {
             self.state.row += 1;
         }
-        if self.state.row >= ROWS {
-            self.state.row -= ROWS;
+        if self.state.row >= self.rows {
+            self.state.row -= self.rows;
         }
     }
 
@@ -160,7 +151,7 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
     }
 
     pub fn next_col(&mut self) {
-        if self.state.column == COLS - 1 {
+        if self.state.column == self.cols - 1 {
             self.state.column = 0;
         } else {
             self.state.column += 1;
@@ -176,7 +167,7 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
 
     pub fn prev_col(&mut self) {
         if self.state.column == 0 {
-            self.state.column = COLS - 1;
+            self.state.column = self.cols - 1;
         } else {
             self.state.column -= 1;
         }
@@ -211,8 +202,8 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize>
     }
 }
 
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> Serialize
-    for StatefulTable<T, ROWS, COLS>
+impl<T: Clone + Serialize> Serialize
+    for StatefulTable<T>
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -223,56 +214,24 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> Serializ
     }
 }
 
-impl<'de, T: Copy + Clone + Serialize + Deserialize<'de>, const ROWS: usize, const COLS: usize>
-    Deserialize<'de> for StatefulTable<T, ROWS, COLS>
-{
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let items: Vec<T> = Vec::deserialize(deserializer)?;
-        Ok(StatefulTable::with_items(items))
-    }
-}
+// impl<'de, T: Clone + Serialize + Deserialize<'de>>
+//     Deserialize<'de> for StatefulTable<T>
+// {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: Deserializer<'de>,
+//     {
+//         let items: Vec<T> = Vec::deserialize(deserializer)?;
+//         Ok(StatefulTable::with_items(rows????, cols????, items))
+//     }
+// }
 
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> IntoIterator
-    for StatefulTable<T, ROWS, COLS>
+impl<T: Clone + Serialize> IntoIterator
+    for StatefulTable<T>
 {
     type Item = T;
     type IntoIter = std::vec::IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {
         self.as_vec().into_iter()
-    }
-}
-
-impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> Widget
-    for StatefulTable<T, ROWS, COLS>
-{
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        // TODO!()
-        let grid = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(3); ROWS])
-            .split(area)
-            .iter()
-            .map(|&area| {
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints([Constraint::Ratio(1, COLS as u32); COLS])
-                    .split(area)
-                    .to_vec()
-            })
-            .collect_vec();
-        for (x, row) in grid.iter().enumerate() {
-            for (y, rect) in row.iter().enumerate() {
-                let item_opt = self.get(x, y);
-                if let Some(item) = item_opt {
-                    Paragraph::new("Some").render(*rect, buf);
-                } else {
-                    Paragraph::new("None").render(*rect, buf);
-                }
-            }
-
-        }
     }
 }

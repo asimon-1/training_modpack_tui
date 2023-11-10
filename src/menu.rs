@@ -1,3 +1,8 @@
+use itertools::Itertools;
+use ratatui::{
+    prelude::*,
+    widgets::{Paragraph, Widget},
+};
 use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
 
@@ -5,7 +10,8 @@ use crate::StatefulTable;
 
 #[allow(dead_code)]
 // const NX_TUI_WIDTH: u16 = 240;
-// const NX_TAB_COLUMNS: usize = 4;
+pub const NX_TAB_ROWS: usize = 1;
+pub const NX_TAB_COLUMNS: usize = 15;
 pub const NX_SUBMENU_ROWS: usize = 8;
 pub const NX_SUBMENU_COLUMNS: usize = 4;
 
@@ -31,14 +37,14 @@ pub enum AppPage {
 //       └─ Option<Slider>
 
 pub struct App<'a> {
-    pub tabs: StatefulTable<Tab<'a>, 1, 2>, // Can't be too big otherwise stack overflow TODO!()
+    pub tabs: StatefulTable<Tab<'a>>,
     pub page: AppPage,
 }
 
 impl<'a> App<'a> {
-    pub fn new() -> App<'a> {
+    pub fn new(rows: usize, cols: usize) -> App<'a> {
         App {
-            tabs: StatefulTable::new(),
+            tabs: StatefulTable::new(rows, cols),
             page: AppPage::SUBMENU,
         }
     }
@@ -58,11 +64,11 @@ impl<'a> Serialize for App<'a> {
 }
 
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Tab<'a> {
     pub title: &'a str,
     pub id: &'a str,
-    pub submenus: StatefulTable<SubMenu<'a>, NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS>,
+    pub submenus: StatefulTable<SubMenu<'a>>,
 }
 
 impl<'a> Serialize for Tab<'a> {
@@ -71,21 +77,52 @@ impl<'a> Serialize for Tab<'a> {
         S: Serializer,
     {
         let mut map = serializer.serialize_map(Some(self.submenus.len()))?;
-        for submenu in self.submenus {
+        for submenu in self.submenus.as_vec().iter() {
             map.serialize_entry(&submenu.title, &submenu)?;
         }
         map.end()
     }
 }
 
+impl<'a> Widget for Tab<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let grid = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Length(3); self.submenus.rows])
+            .split(area)
+            .iter()
+            .map(|&area| {
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(vec![
+                        Constraint::Ratio(1, self.submenus.cols as u32);
+                        self.submenus.cols
+                    ])
+                    .split(area)
+                    .to_vec()
+            })
+            .collect_vec();
+        for (x, row) in grid.iter().enumerate() {
+            for (y, rect) in row.iter().enumerate() {
+                let item_opt = self.submenus.get(x, y);
+                if let Some(item) = item_opt {
+                    Paragraph::new(item.title).render(*rect, buf);
+                } else {
+                    Paragraph::new("").render(*rect, buf);
+                }
+            }
+        }
+    }
+}
+
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct SubMenu<'a> {
     pub title: &'a str,
     pub id: &'a str,
     pub help_text: &'a str,
     pub type_: SubMenuType,
-    pub toggles: StatefulTable<Toggle<'a>, NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS>,
+    pub toggles: StatefulTable<Toggle<'a>>,
     pub slider: Option<Slider>,
 }
 
@@ -96,6 +133,37 @@ impl<'a> Serialize for SubMenu<'a> {
     {
         // TODO! Match on SubMenuType and Impl for Slider
         self.toggles.serialize(serializer)
+    }
+}
+
+impl<'a> Widget for SubMenu<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let grid = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![Constraint::Length(3); self.toggles.rows])
+            .split(area)
+            .iter()
+            .map(|&area| {
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(vec![
+                        Constraint::Ratio(1, self.toggles.cols as u32);
+                        self.toggles.cols
+                    ])
+                    .split(area)
+                    .to_vec()
+            })
+            .collect_vec();
+        for (x, row) in grid.iter().enumerate() {
+            for (y, rect) in row.iter().enumerate() {
+                let item_opt = self.toggles.get(x, y);
+                if let Some(item) = item_opt {
+                    Paragraph::new(item.toggle_title).render(*rect, buf);
+                } else {
+                    Paragraph::new("").render(*rect, buf);
+                }
+            }
+        }
     }
 }
 
