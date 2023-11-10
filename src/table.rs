@@ -1,24 +1,11 @@
-use serde::{Deserialize, Serialize, Serializer};
+use ratatui::widgets::*;
+use serde::{Serialize, Serializer};
 
 /// Allows a snake-filled table of arbitrary size
 /// The final row does not need to be filled
 /// [ a , b , c , d ]
 /// [ e, f, g, h, i ]
 /// [ j, k          ]
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Deserialize)]
-pub struct TableState {
-    pub row: usize,
-    pub column: usize,
-}
-
-impl TableState {
-    pub fn new() -> TableState {
-        TableState { row: 0, column: 0 }
-    }
-    pub fn new_with(row: usize, column: usize) -> TableState {
-        TableState { row, column }
-    }
-}
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct StatefulTable<T: Clone + Serialize> {
@@ -29,9 +16,7 @@ pub struct StatefulTable<T: Clone + Serialize> {
 }
 
 // Size-related functions
-impl<T: Clone + Serialize>
-    StatefulTable<T>
-{
+impl<T: Clone + Serialize> StatefulTable<T> {
     pub fn len(&self) -> usize {
         self.items
             .iter()
@@ -59,12 +44,10 @@ impl<T: Clone + Serialize>
 }
 
 // Associated Functions
-impl<T: Clone + Serialize>
-    StatefulTable<T>
-{
+impl<T: Clone + Serialize> StatefulTable<T> {
     pub fn new(rows: usize, cols: usize) -> Self {
         Self {
-            state: TableState::new(),
+            state: TableState::default().with_selected(Some(TableSelection::default())),
             items: vec![vec![None; cols]; rows],
             rows: rows,
             cols: cols,
@@ -89,17 +72,15 @@ impl<T: Clone + Serialize>
 }
 
 // State Functions
-impl<T: Clone + Serialize>
-    StatefulTable<T>
-{
-    pub fn select(&mut self, row: usize, column: usize) {
-        assert!(column < self.cols);
+impl<T: Clone + Serialize> StatefulTable<T> {
+    pub fn select(&mut self, row: usize, col: usize) {
+        assert!(col < self.cols);
         assert!(row < self.rows);
-        self.state = TableState { row, column };
+        self.state.select(Some(TableSelection::Cell { row, col }));
     }
 
     pub fn get_selected(&self) -> Option<&T> {
-        self.items[self.state.row][self.state.column].as_ref()
+        self.items[self.state.selected_row().unwrap()][self.state.selected_col().unwrap()].as_ref()
     }
 
     pub fn get(&self, row: usize, column: usize) -> Option<&T> {
@@ -117,12 +98,18 @@ impl<T: Clone + Serialize>
     }
 
     pub fn next_row(&mut self) {
-        if self.state.row == self.rows - 1 {
-            // Wrap around
-            self.state.row = 0;
-        } else {
-            self.state.row += 1;
-        }
+        let next_row = match self.state.selected_row() {
+            Some(row) => {
+                if row == self.items.len() - 1 {
+                    0
+                } else {
+                    row + 1
+                }
+            }
+
+            None => 0,
+        };
+        self.state.select_row(Some(next_row));
     }
 
     pub fn next_row_checked(&mut self) {
@@ -133,14 +120,18 @@ impl<T: Clone + Serialize>
     }
 
     pub fn prev_row(&mut self) {
-        if self.state.row == 0 {
-            self.state.row = self.rows - 1;
-        } else {
-            self.state.row += 1;
-        }
-        if self.state.row >= self.rows {
-            self.state.row -= self.rows;
-        }
+        let prev_row = match self.state.selected_row() {
+            Some(row) => {
+                if row == 0 {
+                    self.items.len() - 1
+                } else {
+                    row - 1
+                }
+            }
+            None => 0,
+        };
+
+        self.state.select_row(Some(prev_row));
     }
 
     pub fn prev_row_checked(&mut self) {
@@ -151,26 +142,39 @@ impl<T: Clone + Serialize>
     }
 
     pub fn next_col(&mut self) {
-        if self.state.column == self.cols - 1 {
-            self.state.column = 0;
-        } else {
-            self.state.column += 1;
-        }
+        // Assumes that all rows are the same width
+        let next_col = match self.state.selected_col() {
+            Some(col) => {
+                if col == self.items[0].len() - 1 {
+                    0
+                } else {
+                    col + 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select_col(Some(next_col));
     }
 
     pub fn next_col_checked(&mut self) {
         self.next_col();
         if self.get_selected().is_none() {
-            self.state.column = 0;
+            self.next_col_checked();
         }
     }
 
     pub fn prev_col(&mut self) {
-        if self.state.column == 0 {
-            self.state.column = self.cols - 1;
-        } else {
-            self.state.column -= 1;
-        }
+        let prev_col = match self.state.selected_col() {
+            Some(col) => {
+                if col == 0 {
+                    self.items[0].len() - 1
+                } else {
+                    col - 1
+                }
+            }
+            None => 0,
+        };
+        self.state.select_col(Some(prev_col));
     }
 
     pub fn prev_col_checked(&mut self) {
@@ -192,7 +196,9 @@ impl<T: Clone + Serialize>
     /// [[d],    ,    ]
     pub fn carriage_return(&mut self) {
         assert!(
-            self.items[self.state.row].iter().any(|x| x.is_some()),
+            self.items[self.state.selected_row().unwrap()]
+                .iter()
+                .any(|x| x.is_some()),
             "Carriage return called on an empty row!"
         );
         if self.get_selected().is_none() {
@@ -202,9 +208,7 @@ impl<T: Clone + Serialize>
     }
 }
 
-impl<T: Clone + Serialize> Serialize
-    for StatefulTable<T>
-{
+impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -226,9 +230,7 @@ impl<T: Clone + Serialize> Serialize
 //     }
 // }
 
-impl<T: Clone + Serialize> IntoIterator
-    for StatefulTable<T>
-{
+impl<T: Clone + Serialize> IntoIterator for StatefulTable<T> {
     type Item = T;
     type IntoIter = std::vec::IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {

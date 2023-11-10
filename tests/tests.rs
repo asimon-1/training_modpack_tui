@@ -1,9 +1,14 @@
-use training_mod_tui_2::{StatefulTable, TableState};
+use ratatui::widgets::{TableSelection, TableState};
+use training_mod_tui_2::StatefulTable;
 
 fn initialize_table(row: usize, col: usize) -> StatefulTable<u8> {
     let mut s = StatefulTable::with_items(2, 3, vec![0, 1, 2, 3, 4]);
     s.select(row, col);
     s
+}
+
+fn tablestate_with(row: usize, col: usize) -> TableState {
+    TableState::default().with_selected(Some(TableSelection::Cell { row, col }))
 }
 
 #[test]
@@ -92,14 +97,14 @@ fn test_prev_col_short() {
 fn test_carriage_return_none() {
     let mut t = initialize_table(1, 2);
     t.carriage_return();
-    assert_eq!(t.state, TableState::new_with(1, 1));
+    assert_eq!(t.state, tablestate_with(1, 1));
 }
 
 #[test]
 fn test_carriage_return_some() {
     let mut t = initialize_table(1, 1);
     t.carriage_return();
-    assert_eq!(t.state, TableState::new_with(1, 1));
+    assert_eq!(t.state, tablestate_with(1, 1));
 }
 
 #[test]
@@ -164,10 +169,10 @@ pub fn test_serialize() {
 
 #[test]
 pub fn test_new() {
-    let t: StatefulTable<u8> = StatefulTable::new(2,3);
-    let u: StatefulTable<u8> = StatefulTable::with_items(2,3,vec![]);
+    let t: StatefulTable<u8> = StatefulTable::new(2, 3);
+    let u: StatefulTable<u8> = StatefulTable::with_items(2, 3, vec![]);
     let v: StatefulTable<u8> = StatefulTable {
-        state: TableState::new(),
+        state: tablestate_with(0, 0),
         items: vec![vec![None; 3]; 2],
         rows: 2,
         cols: 3,
