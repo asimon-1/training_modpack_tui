@@ -11,12 +11,14 @@ use std::{
     time::{Duration, Instant},
 };
 
+use training_mod_tui_2::{StatefulTable, App, Tab, SubMenu, Toggle, SubMenuType};
+
 fn main() -> Result<(), Box<dyn Error>> {
-    let app = training_mod_tui_2::create_app();
+    let app = create_app();
     let mut terminal = setup_terminal()?;
 
     let tick_rate = Duration::from_millis(250);
-    let res = run_app(&mut terminal, app, tick_rate);
+    let res = run_app(&mut terminal, *app, tick_rate);
     restore_terminal(terminal)?;
 
     if let Err(err) = res {
@@ -46,6 +48,87 @@ fn restore_terminal(
     Ok(())
 }
 
+pub fn create_app<'a>() -> Box<App<'a>> {
+    let a_button = Toggle {
+        toggle_title: "A Button",
+        toggle_value: 0,
+        toggle_max: 1,
+    };
+    let b_button = Toggle {
+        toggle_title: "B Button",
+        toggle_value: 1,
+        toggle_max: 1,
+    };
+
+    let mut app = Box::new(App::new());
+    let mut button_tab_submenus: Vec<SubMenu> = Vec::new();
+    button_tab_submenus.push(SubMenu {
+        title: "Menu Open Start Press",
+        id: "menu_open_start_press",
+        help_text: "Help",
+        type_: SubMenuType::ToggleSingle,
+        toggles: StatefulTable::with_items(vec![a_button, b_button]),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Save State Save",
+        id: "save_state_save",
+        help_text: "Save State Save: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+
+    button_tab_submenus.push(SubMenu {
+        title: "Menu Open Start Press",
+        id: "menu_open_start_press",
+        help_text: "Menu Open Start Press: Hold start or press minus to open the mod menu. To open the original menu, press start.\nThe default menu open option is always available as Hold DPad Up + Press B.",
+        type_: SubMenuType::ToggleSingle,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Save State Save",
+        id: "save_state_save",
+        help_text: "Save State Save: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Save State Load",
+        id: "save_state_load",
+        help_text: "Save State Load: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Input Record",
+        id: "input_record",
+        help_text: "Input Record: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+    button_tab_submenus.push(SubMenu {
+        title: "Input Playback",
+        id: "input_playback",
+        help_text: "Input Playback: Hold any one button and press the others to trigger",
+        type_: SubMenuType::ToggleMultiple,
+        toggles: StatefulTable::with_items(Vec::new()),
+        slider: None,
+    });
+
+    let button_tab = Tab {
+        id: "button",
+        title: "Button Config",
+        submenus: StatefulTable::with_items(button_tab_submenus),
+    };
+    app.tabs = StatefulTable::with_items(vec![button_tab]);
+    app
+}
+
 fn run_app<B: ratatui::backend::Backend>(
     terminal: &mut Terminal<B>,
     mut app: training_mod_tui_2::App,
@@ -53,7 +136,7 @@ fn run_app<B: ratatui::backend::Backend>(
 ) -> io::Result<String> {
     let mut last_tick = Instant::now();
     loop {
-        terminal.draw(|f| training_mod_tui_2::ui(f, &mut app))?;
+        terminal.draw(|f| training_mod_tui_2::render_ui(f, &mut app))?;
         let menu_json = app.to_json();
 
         let timeout = tick_rate

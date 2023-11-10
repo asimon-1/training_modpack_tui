@@ -1,3 +1,10 @@
+use itertools::Itertools;
+use ratatui::{
+    buffer::Buffer,
+    layout::Rect,
+    prelude::*,
+    widgets::{Paragraph, Widget},
+};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Allows a snake-filled table of arbitrary size
@@ -235,5 +242,37 @@ impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> IntoIter
     type IntoIter = std::vec::IntoIter<Self::Item>;
     fn into_iter(self) -> Self::IntoIter {
         self.as_vec().into_iter()
+    }
+}
+
+impl<T: Copy + Clone + Serialize, const ROWS: usize, const COLS: usize> Widget
+    for StatefulTable<T, ROWS, COLS>
+{
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        // TODO!()
+        let grid = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([Constraint::Length(3); ROWS])
+            .split(area)
+            .iter()
+            .map(|&area| {
+                Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints([Constraint::Ratio(1, COLS as u32); COLS])
+                    .split(area)
+                    .to_vec()
+            })
+            .collect_vec();
+        for (x, row) in grid.iter().enumerate() {
+            for (y, rect) in row.iter().enumerate() {
+                let item_opt = self.get(x, y);
+                if let Some(item) = item_opt {
+                    Paragraph::new("Some").render(*rect, buf);
+                } else {
+                    Paragraph::new("None").render(*rect, buf);
+                }
+            }
+
+        }
     }
 }
