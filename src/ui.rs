@@ -31,6 +31,7 @@ pub fn render_ui(f: &mut Frame, app: &mut App) {
         AppPage::CONFIRMATION => {
             f.render_widget(Paragraph::new("Confirmation!"), menu_area);
         }
+        AppPage::CLOSE => {}
     }
 }
 

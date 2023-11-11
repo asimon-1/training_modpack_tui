@@ -13,7 +13,7 @@ pub struct SubMenu<'a> {
     pub title: &'a str,
     pub id: &'a str,
     pub help_text: &'a str,
-    pub type_: SubMenuType,
+    pub submenu_type: SubMenuType,
     pub toggles: StatefulTable<Toggle<'a>>,
     pub slider: Option<Slider>,
 }

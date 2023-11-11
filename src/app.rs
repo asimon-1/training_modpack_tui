@@ -1,7 +1,7 @@
 use serde::ser::Serializer;
 use serde::Serialize;
 
-use crate::{InputControl, StatefulTable, Tab};
+use crate::{InputControl, StatefulTable, SubMenuType, Tab};
 
 #[derive(PartialEq, Serialize)]
 pub enum AppPage {
@@ -9,6 +9,7 @@ pub enum AppPage {
     TOGGLE,
     SLIDER,
     CONFIRMATION,
+    CLOSE,
 }
 
 // Menu structure is:
@@ -54,7 +55,21 @@ impl<'a> Serialize for App<'a> {
 impl<'a> InputControl for App<'a> {
     fn on_a(&mut self) {
         match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_a(),
+            AppPage::SUBMENU => {
+                let tab = self.tabs.get_selected().expect("No tab selected!");
+                let submenu_type = tab
+                    .submenus
+                    .get_selected()
+                    .expect("No submenu selected!")
+                    .submenu_type;
+                self.page = match submenu_type {
+                    SubMenuType::ToggleSingle => AppPage::TOGGLE,
+                    SubMenuType::ToggleMultiple => AppPage::TOGGLE,
+                    SubMenuType::Slider => AppPage::SLIDER,
+                    SubMenuType::None => AppPage::SUBMENU,
+                };
+                tab.on_a()
+            }
             AppPage::TOGGLE => self
                 .tabs
                 .get_selected()
@@ -72,28 +87,28 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_a(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_b(&mut self) {
         match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_b(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_b(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_b(),
-            AppPage::CONFIRMATION => {}
+            AppPage::SUBMENU => {
+                // Exit the app
+                self.page = AppPage::CLOSE;
+            }
+            AppPage::TOGGLE => {
+                // Return to the list of submenus
+                self.page = AppPage::SUBMENU;
+            }
+            AppPage::SLIDER => {
+                // Return to the list of submenus
+                self.page = AppPage::SUBMENU;
+            }
+            AppPage::CONFIRMATION => {
+                // Return to the list of submenus
+                self.page = AppPage::SUBMENU;
+            }
+            AppPage::CLOSE => {}
         }
     }
     fn on_x(&mut self) {
@@ -116,6 +131,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_x(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_y(&mut self) {
@@ -138,6 +154,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_y(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_up(&mut self) {
@@ -160,6 +177,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_up(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_down(&mut self) {
@@ -186,6 +204,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_down(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_left(&mut self) {
@@ -212,6 +231,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_left(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_right(&mut self) {
@@ -238,6 +258,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_right(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_start(&mut self) {
@@ -264,6 +285,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_start(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_l(&mut self) {
@@ -286,6 +308,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_l(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_r(&mut self) {
@@ -308,6 +331,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_r(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_zl(&mut self) {
@@ -330,6 +354,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_zl(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
     fn on_zr(&mut self) {
@@ -352,6 +377,7 @@ impl<'a> InputControl for App<'a> {
                 .expect("No submenu selected!")
                 .on_zr(),
             AppPage::CONFIRMATION => {}
+            AppPage::CLOSE => {}
         }
     }
 }

@@ -12,8 +12,8 @@ use std::{
 };
 
 use training_mod_tui_2::{
-    App, InputControl, StatefulTable, SubMenu, SubMenuType, Tab, Toggle, NX_SUBMENU_COLUMNS,
-    NX_SUBMENU_ROWS, NX_TAB_COLUMNS, NX_TAB_ROWS,
+    App, AppPage, InputControl, StatefulTable, SubMenu, SubMenuType, Tab, Toggle,
+    NX_SUBMENU_COLUMNS, NX_SUBMENU_ROWS, NX_TAB_COLUMNS, NX_TAB_ROWS,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -69,7 +69,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Menu Open Start Press",
         id: "menu_open_start_press",
         help_text: "Help",
-        type_: SubMenuType::ToggleSingle,
+        submenu_type: SubMenuType::ToggleSingle,
         toggles: StatefulTable::with_items(
             NX_SUBMENU_ROWS,
             NX_SUBMENU_COLUMNS,
@@ -81,7 +81,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Save State Save",
         id: "save_state_save",
         help_text: "Save State Save: Hold any one button and press the others to trigger",
-        type_: SubMenuType::ToggleMultiple,
+        submenu_type: SubMenuType::ToggleMultiple,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -90,7 +90,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Menu Open Start Press",
         id: "menu_open_start_press",
         help_text: "Menu Open Start Press: Hold start or press minus to open the mod menu. To open the original menu, press start.\nThe default menu open option is always available as Hold DPad Up + Press B.",
-        type_: SubMenuType::ToggleSingle,
+        submenu_type: SubMenuType::ToggleSingle,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -98,7 +98,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Save State Save",
         id: "save_state_save",
         help_text: "Save State Save: Hold any one button and press the others to trigger",
-        type_: SubMenuType::ToggleMultiple,
+        submenu_type: SubMenuType::ToggleMultiple,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -106,7 +106,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Save State Load",
         id: "save_state_load",
         help_text: "Save State Load: Hold any one button and press the others to trigger",
-        type_: SubMenuType::ToggleMultiple,
+        submenu_type: SubMenuType::ToggleMultiple,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -114,7 +114,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Input Record",
         id: "input_record",
         help_text: "Input Record: Hold any one button and press the others to trigger",
-        type_: SubMenuType::ToggleMultiple,
+        submenu_type: SubMenuType::ToggleMultiple,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -122,7 +122,7 @@ pub fn create_app<'a>() -> App<'a> {
         title: "Input Playback",
         id: "input_playback",
         help_text: "Input Playback: Hold any one button and press the others to trigger",
-        type_: SubMenuType::ToggleMultiple,
+        submenu_type: SubMenuType::ToggleMultiple,
         toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
         slider: None,
     });
@@ -148,7 +148,9 @@ fn run_app<B: ratatui::backend::Backend>(
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|f| training_mod_tui_2::render_ui(f, &mut app))?;
-        let menu_json = app.to_json();
+        if app.page == AppPage::CLOSE {
+            return Ok(app.to_json());
+        }
 
         let timeout = tick_rate
             .checked_sub(last_tick.elapsed())
@@ -157,18 +159,21 @@ fn run_app<B: ratatui::backend::Backend>(
         if crossterm::event::poll(timeout)? {
             if let Event::Key(key) = event::read()? {
                 match key.code {
-                    KeyCode::Char('q') => return Ok(menu_json),
-                    // KeyCode::Char('x') => app.save_defaults(),
-                    // KeyCode::Char('p') => app.reset_current_submenu(),
-                    // KeyCode::Char('o') => app.reset_all_submenus(),
-                    // KeyCode::Char('r') => app.next_tab(),
-                    // KeyCode::Char('l') => app.previous_tab(),
+                    KeyCode::Char('q') => app.page = AppPage::CLOSE,
+                    KeyCode::Char('a') => app.on_a(),
+                    KeyCode::Char('b') => app.on_b(),
+                    KeyCode::Char('x') => app.on_x(),
+                    KeyCode::Char('y') => app.on_y(),
+                    KeyCode::Char('o') => app.on_zl(),
+                    KeyCode::Char('p') => app.on_zr(),
+                    KeyCode::Char('l') => app.on_l(),
+                    KeyCode::Char('r') => app.on_r(),
                     KeyCode::Left => app.on_left(),
                     KeyCode::Right => app.on_right(),
                     KeyCode::Down => app.on_down(),
                     KeyCode::Up => app.on_up(),
                     KeyCode::Enter => app.on_a(),
-                    // KeyCode::Backspace => app.on_b(),
+                    KeyCode::Backspace => app.on_b(),
                     _ => {}
                 }
             }
