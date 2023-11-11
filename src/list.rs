@@ -1,5 +1,5 @@
 use ratatui::widgets::ListState;
-use serde::ser::{Serialize, Serializer, SerializeSeq};
+use serde::ser::{Serialize, SerializeSeq, Serializer};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct StatefulList<T: Serialize> {
@@ -57,7 +57,7 @@ impl<T: Serialize> StatefulList<T> {
 }
 
 impl<T: Serialize> Serialize for StatefulList<T> {
-    fn serialize<S>(&self, serializer:S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {

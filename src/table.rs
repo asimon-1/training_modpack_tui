@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use ratatui::widgets::*;
 use serde::{Serialize, Serializer};
 
@@ -41,6 +42,18 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         }
         v
     }
+
+    pub fn as_vec_vec_t(&mut self) -> Vec<Vec<T>> {
+        // Unwraps the inner values and trims any None's
+        //
+        // Note that the vectors are no longer guaranteed
+        // to be the same size!
+        self.items
+            .iter()
+            .map(|v| v.clone().into_iter().filter_map(|item| item).collect_vec())
+            .filter(|v| v.len() > 0)
+            .collect()
+    }
 }
 
 // Associated Functions
@@ -79,11 +92,11 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         self.state.select(Some(TableSelection::Cell { row, col }));
     }
 
-    pub fn get_selected(&self) -> Option<&T> {
-        self.items[self.state.selected_row().unwrap()][self.state.selected_col().unwrap()].as_ref()
+    pub fn get_selected(&mut self) -> Option<&mut T> {
+        self.items[self.state.selected_row().unwrap()][self.state.selected_col().unwrap()].as_mut()
     }
 
-    pub fn get(&self, row: usize, column: usize) -> Option<&T> {
+    pub fn get(&mut self, row: usize, column: usize) -> Option<&T> {
         if row >= self.rows || column >= self.cols {
             None
         } else {
@@ -91,7 +104,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         }
     }
 
-    pub fn get_by_idx(&self, idx: usize) -> Option<&T> {
+    pub fn get_by_idx(&mut self, idx: usize) -> Option<&T> {
         let row = idx.div_euclid(self.cols);
         let col = idx.rem_euclid(self.cols);
         self.get(row, col)

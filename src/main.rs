@@ -12,16 +12,8 @@ use std::{
 };
 
 use training_mod_tui_2::{
-    App,
-    StatefulTable,
-    SubMenu,
-    SubMenuType,
-    Tab,
-    Toggle,
-    NX_SUBMENU_COLUMNS,
-    NX_SUBMENU_ROWS,
-    NX_TAB_COLUMNS,
-    NX_TAB_ROWS,
+    App, InputControl, StatefulTable, SubMenu, SubMenuType, Tab, Toggle, NX_SUBMENU_COLUMNS,
+    NX_SUBMENU_ROWS, NX_TAB_COLUMNS, NX_TAB_ROWS,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -29,7 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = setup_terminal()?;
 
     let tick_rate = Duration::from_millis(250);
-    let res = run_app(&mut terminal, *app, tick_rate);
+    let res = run_app(&mut terminal, app, tick_rate);
     restore_terminal(terminal)?;
 
     if let Err(err) = res {
@@ -59,7 +51,7 @@ fn restore_terminal(
     Ok(())
 }
 
-pub fn create_app<'a>() -> Box<App<'a>> {
+pub fn create_app<'a>() -> App<'a> {
     let a_button = Toggle {
         toggle_title: "A Button",
         toggle_value: 0,
@@ -71,7 +63,7 @@ pub fn create_app<'a>() -> Box<App<'a>> {
         toggle_max: 1,
     };
 
-    let mut app = Box::new(App::new(NX_TAB_ROWS, NX_TAB_COLUMNS));
+    let mut app = App::new(NX_TAB_ROWS, NX_TAB_COLUMNS);
     let mut button_tab_submenus: Vec<SubMenu> = Vec::new();
     button_tab_submenus.push(SubMenu {
         title: "Menu Open Start Press",
@@ -171,11 +163,11 @@ fn run_app<B: ratatui::backend::Backend>(
                     // KeyCode::Char('o') => app.reset_all_submenus(),
                     // KeyCode::Char('r') => app.next_tab(),
                     // KeyCode::Char('l') => app.previous_tab(),
-                    // KeyCode::Left => app.on_left(),
-                    // KeyCode::Right => app.on_right(),
-                    // KeyCode::Down => app.on_down(),
-                    // KeyCode::Up => app.on_up(),
-                    // KeyCode::Enter => app.on_a(),
+                    KeyCode::Left => app.on_left(),
+                    KeyCode::Right => app.on_right(),
+                    KeyCode::Down => app.on_down(),
+                    KeyCode::Up => app.on_up(),
+                    KeyCode::Enter => app.on_a(),
                     // KeyCode::Backspace => app.on_b(),
                     _ => {}
                 }
