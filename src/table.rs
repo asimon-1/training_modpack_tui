@@ -49,7 +49,8 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         // Note that the vectors are no longer guaranteed
         // to be the same size!
         self.items
-            .iter()
+            .clone()
+            .into_iter()
             .map(|v| v.clone().into_iter().filter_map(|item| item).collect_vec())
             .filter(|v| v.len() > 0)
             .collect()

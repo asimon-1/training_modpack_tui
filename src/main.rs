@@ -53,14 +53,14 @@ fn restore_terminal(
 
 pub fn create_app<'a>() -> App<'a> {
     let a_button = Toggle {
-        toggle_title: "A Button",
-        toggle_value: 0,
-        toggle_max: 1,
+        title: "A Button",
+        value: 0,
+        max: 1,
     };
     let b_button = Toggle {
-        toggle_title: "B Button",
-        toggle_value: 1,
-        toggle_max: 1,
+        title: "B Button",
+        value: 1,
+        max: 1,
     };
 
     let mut app = App::new(NX_TAB_ROWS, NX_TAB_COLUMNS);

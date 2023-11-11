@@ -1,7 +1,7 @@
 use serde::ser::Serializer;
 use serde::Serialize;
 
-use crate::{InputControl, StatefulTable, SubMenuType, Tab};
+use crate::{InputControl, StatefulTable, SubMenu, SubMenuType, Tab};
 
 #[derive(PartialEq, Serialize)]
 pub enum AppPage {
@@ -38,8 +38,19 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn to_json(self: &App<'a>) -> String {
+    pub fn to_json(&self) -> String {
         serde_json::to_string(&self).expect("Could not serialize the menu to JSON!")
+    }
+
+    pub fn selected_tab(&mut self) -> &mut Tab<'a> {
+        self.tabs.get_selected().expect("No tab selected!")
+    }
+
+    pub fn selected_submenu(&mut self) -> &mut SubMenu<'a> {
+        self.selected_tab()
+            .submenus
+            .get_selected()
+            .expect("No submenu selected!")
     }
 }
 

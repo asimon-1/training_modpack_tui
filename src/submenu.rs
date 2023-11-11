@@ -50,7 +50,7 @@ impl<'a> Widget for SubMenu<'a> {
             for (y, rect) in row.iter().enumerate() {
                 let item_opt = self.toggles.get(x, y);
                 if let Some(item) = item_opt {
-                    Paragraph::new(item.toggle_title).render(*rect, buf);
+                    Paragraph::new(item.title).render(*rect, buf);
                 } else {
                     Paragraph::new("").render(*rect, buf);
                 }

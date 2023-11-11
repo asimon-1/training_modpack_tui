@@ -3,9 +3,9 @@ use serde::Serialize;
 
 #[derive(Clone, Copy)]
 pub struct Toggle<'a> {
-    pub toggle_title: &'a str,
-    pub toggle_value: u8,
-    pub toggle_max: u8,
+    pub title: &'a str,
+    pub value: u8,
+    pub max: u8,
 }
 
 impl Serialize for Toggle<'_> {
@@ -13,6 +13,6 @@ impl Serialize for Toggle<'_> {
     where
         S: Serializer,
     {
-        serializer.serialize_u8(self.toggle_value)
+        serializer.serialize_u8(self.value)
     }
 }
