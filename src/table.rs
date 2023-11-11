@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use ratatui::widgets::*;
 use serde::{Serialize, Serializer};
 
@@ -42,19 +41,6 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         }
         v
     }
-
-    pub fn as_vec_vec_t(&mut self) -> Vec<Vec<T>> {
-        // Unwraps the inner values and trims any None's
-        //
-        // Note that the vectors are no longer guaranteed
-        // to be the same size!
-        self.items
-            .clone()
-            .into_iter()
-            .map(|v| v.clone().into_iter().filter_map(|item| item).collect_vec())
-            .filter(|v| v.len() > 0)
-            .collect()
-    }
 }
 
 // Associated Functions
@@ -97,7 +83,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         self.items[self.state.selected_row().unwrap()][self.state.selected_col().unwrap()].as_mut()
     }
 
-    pub fn get(&mut self, row: usize, column: usize) -> Option<&T> {
+    pub fn get(&self, row: usize, column: usize) -> Option<&T> {
         if row >= self.rows || column >= self.cols {
             None
         } else {
@@ -105,10 +91,23 @@ impl<T: Clone + Serialize> StatefulTable<T> {
         }
     }
 
-    pub fn get_by_idx(&mut self, idx: usize) -> Option<&T> {
+    pub fn get_mut(&mut self, row: usize, column: usize) -> Option<&mut T> {
+        if row >= self.rows || column >= self.cols {
+            None
+        } else {
+            self.items[row][column].as_mut()
+        }
+    }
+
+    pub fn get_by_idx(&self, idx: usize) -> Option<&T> {
         let row = idx.div_euclid(self.cols);
         let col = idx.rem_euclid(self.cols);
         self.get(row, col)
+    }
+    pub fn get_by_idx_mut(&mut self, idx: usize) -> Option<&mut T> {
+        let row = idx.div_euclid(self.cols);
+        let col = idx.rem_euclid(self.cols);
+        self.get_mut(row, col)
     }
 
     pub fn next_row(&mut self) {
@@ -232,6 +231,7 @@ impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
     }
 }
 
+// TODO!() Is this still needed?
 // impl<'de, T: Clone + Serialize + Deserialize<'de>>
 //     Deserialize<'de> for StatefulTable<T>
 // {
@@ -244,10 +244,34 @@ impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
 //     }
 // }
 
-impl<T: Clone + Serialize> IntoIterator for StatefulTable<T> {
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-    fn into_iter(self) -> Self::IntoIter {
-        self.as_vec().into_iter()
+// TODO!() Is this still needed?
+// impl<T: Clone + Serialize> IntoIterator for StatefulTable<T> {
+//     type Item = T;
+//     type IntoIter = std::vec::IntoIter<Self::Item>;
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.as_vec().into_iter()
+//     }
+// }
+
+// Implement .iter() for StatefulTable
+pub struct StatefulTableIterator<'a, T: Clone + Serialize> {
+    stateful_table: &'a StatefulTable<T>,
+    index: usize,
+}
+
+impl<'a, T: Clone + Serialize> Iterator for StatefulTableIterator<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.index += 1;
+        self.stateful_table.get_by_idx(self.index - 1)
+    }
+}
+
+impl<T: Clone + Serialize> StatefulTable<T> {
+    pub fn iter(&self) -> StatefulTableIterator<T> {
+        StatefulTableIterator {
+            stateful_table: self,
+            index: 0,
+        }
     }
 }

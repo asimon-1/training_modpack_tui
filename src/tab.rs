@@ -1,8 +1,3 @@
-use itertools::Itertools;
-use ratatui::{
-    prelude::*,
-    widgets::{Paragraph, Widget},
-};
 use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
 
@@ -50,35 +45,4 @@ impl<'a> InputControl for Tab<'a> {
     fn on_r(&mut self) {}
     fn on_zl(&mut self) {}
     fn on_zr(&mut self) {}
-}
-
-impl<'a> Widget for Tab<'a> {
-    fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let grid = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(3); self.submenus.rows])
-            .split(area)
-            .iter()
-            .map(|&area| {
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(vec![
-                        Constraint::Ratio(1, self.submenus.cols as u32);
-                        self.submenus.cols
-                    ])
-                    .split(area)
-                    .to_vec()
-            })
-            .collect_vec();
-        for (x, row) in grid.iter().enumerate() {
-            for (y, rect) in row.iter().enumerate() {
-                let item_opt = self.submenus.get(x, y);
-                if let Some(item) = item_opt {
-                    Paragraph::new(item.title).render(*rect, buf);
-                } else {
-                    Paragraph::new("").render(*rect, buf);
-                }
-            }
-        }
-    }
 }

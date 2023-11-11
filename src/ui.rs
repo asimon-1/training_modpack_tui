@@ -35,13 +35,20 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
 
 #[allow(dead_code, unused_variables)]
 fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect, help_chunk: Rect) {
-    // Convert the currently selected tab's grid of Option<SubMenu>'s
-    // into a Vec<Row<Cell>> so that we can pass it into Table::new()
     let submenus = &mut app.selected_tab().submenus;
-    let submenus_unwrapped = submenus.as_vec_vec_t();
-    let rows = submenus_unwrapped
+    // Convert the currently selected tab's grid of Option<SubMenu>'s
+    // into an Iter<Row<Cell>> so that we can pass it into Table::new()
+    let rows = submenus
+        .items
         .iter()
-        .map(|row| row.iter().map(|submenu| Cell::from(submenu.title)))
+        .map(|row| {
+            row.iter()
+                .filter(|submenu| submenu.is_some())
+                .map(|submenu| {
+                    let s = submenu.clone().unwrap();
+                    Cell::from(s.title.to_string())
+                })
+        })
         .map(|row| Row::new(row));
 
     let table = Table::new(rows)
@@ -55,10 +62,19 @@ fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect, help_chunk:
 #[allow(dead_code, unused_variables)]
 fn render_toggle_page(frame: &mut Frame, app: &mut App, area: Rect, help_chunk: Rect) {
     let toggles = &mut app.selected_submenu().toggles;
-    let toggles_unwrapped = toggles.as_vec_vec_t();
-    let rows = toggles_unwrapped
+    // Convert the currently selected submenu's grid of Option<Toggle>'s
+    // into an Inter<Row<Cell>> so that we can pass it into Table::new()
+    let rows = toggles
+        .items
         .iter()
-        .map(|row| row.iter().map(|toggle| Cell::from(toggle.title)))
+        .map(|row| {
+            row.iter().filter(|x| x.is_some()).map(|toggle| {
+                // Display both the title and the value
+                // Don't need to clone() here because toggle is Copy
+                let t = toggle.unwrap();
+                Cell::from(t.title.to_string() + "  -  " + &t.value.to_string())
+            })
+        })
         .map(|row| Row::new(row));
 
     let table = Table::new(rows)

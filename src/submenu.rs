@@ -1,8 +1,3 @@
-use itertools::Itertools;
-use ratatui::{
-    prelude::*,
-    widgets::{Paragraph, Widget},
-};
 use serde::ser::Serializer;
 use serde::Serialize;
 
@@ -28,51 +23,68 @@ impl<'a> Serialize for SubMenu<'a> {
     }
 }
 
-impl<'a> Widget for SubMenu<'a> {
-    fn render(mut self, area: Rect, buf: &mut Buffer) {
-        let grid = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(3); self.toggles.rows])
-            .split(area)
-            .iter()
-            .map(|&area| {
-                Layout::default()
-                    .direction(Direction::Horizontal)
-                    .constraints(vec![
-                        Constraint::Ratio(1, self.toggles.cols as u32);
-                        self.toggles.cols
-                    ])
-                    .split(area)
-                    .to_vec()
-            })
-            .collect_vec();
-        for (x, row) in grid.iter().enumerate() {
-            for (y, rect) in row.iter().enumerate() {
-                let item_opt = self.toggles.get(x, y);
-                if let Some(item) = item_opt {
-                    Paragraph::new(item.title).render(*rect, buf);
-                } else {
-                    Paragraph::new("").render(*rect, buf);
+impl<'a> InputControl for SubMenu<'a> {
+    fn on_a(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => {
+                // Set all values to 0 first before incrementing the selected toggle
+                // This ensure that exactly one toggle has a nonzero value
+                for ind in 0..self.toggles.len() {
+                    self.toggles.get_by_idx_mut(ind).unwrap().value = 0;
                 }
+                self.selected_toggle().increment();
             }
+            SubMenuType::ToggleMultiple => self.selected_toggle().increment(),
+            SubMenuType::Slider => {}
+            SubMenuType::None => {}
         }
     }
-}
-
-impl<'a> InputControl for SubMenu<'a> {
-    fn on_a(&mut self) {}
     fn on_b(&mut self) {}
     fn on_x(&mut self) {}
     fn on_y(&mut self) {}
-    fn on_up(&mut self) {}
-    fn on_down(&mut self) {}
-    fn on_left(&mut self) {}
-    fn on_right(&mut self) {}
+    fn on_up(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => self.toggles.prev_row_checked(),
+            SubMenuType::ToggleMultiple => self.toggles.prev_row_checked(),
+            SubMenuType::Slider => {}
+            SubMenuType::None => {}
+        }
+    }
+    fn on_down(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => self.toggles.next_row_checked(),
+            SubMenuType::ToggleMultiple => self.toggles.next_row_checked(),
+            SubMenuType::Slider => {}
+            SubMenuType::None => {}
+        }
+    }
+    fn on_left(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => self.toggles.prev_col_checked(),
+            SubMenuType::ToggleMultiple => self.toggles.prev_col_checked(),
+            SubMenuType::Slider => {}
+            SubMenuType::None => {}
+        }
+    }
+    fn on_right(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => self.toggles.next_col_checked(),
+            SubMenuType::ToggleMultiple => self.toggles.next_col_checked(),
+            SubMenuType::Slider => {}
+            SubMenuType::None => {}
+        }
+    }
     fn on_start(&mut self) {}
     fn on_l(&mut self) {}
     fn on_r(&mut self) {}
     fn on_zl(&mut self) {}
     fn on_zr(&mut self) {}
+}
+
+impl<'a> SubMenu<'a> {
+    fn selected_toggle(&mut self) -> &mut Toggle<'a> {
+        self.toggles.get_selected().expect("No toggle selected!")
+    }
 }
 
 #[derive(Clone, Copy, Serialize)]
