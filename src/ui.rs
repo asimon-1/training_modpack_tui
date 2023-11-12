@@ -35,7 +35,6 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
     render_help_text(frame, app, help_area);
 }
 
-#[allow(dead_code, unused_variables)]
 fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect) {
     let submenus = &mut app.selected_tab().submenus;
     // Convert the currently selected tab's grid of Option<SubMenu>'s
@@ -61,7 +60,6 @@ fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect) {
     frame.render_stateful_widget(table, area, &mut submenus.state);
 }
 
-#[allow(dead_code, unused_variables)]
 fn render_toggle_page(frame: &mut Frame, app: &mut App, area: Rect) {
     let toggles = &mut app.selected_submenu().toggles;
     // Convert the currently selected submenu's grid of Option<Toggle>'s
@@ -88,7 +86,7 @@ fn render_toggle_page(frame: &mut Frame, app: &mut App, area: Rect) {
 }
 
 #[allow(dead_code, unused_variables)]
-fn render_slider_page(frame: &mut Frame, app: &mut App, area: Rect, help_chunk: Rect) {}
+fn render_slider_page(frame: &mut Frame, app: &mut App, area: Rect) {}
 
 fn render_tabs(frame: &mut Frame, app: &mut App, area: Rect) {
     let titles = app.tabs.iter().map(|tab| tab.title).collect();
