@@ -74,9 +74,9 @@ impl<T: Serialize> StatefulList<T> {
         let len = self.items.len();
         if let Some(selected_index) = self.state.selected() {
             if selected_index == 0 {
-                Some(&mut self.items[len-1])
+                Some(&mut self.items[len - 1])
             } else {
-                Some(&mut self.items[selected_index-1])
+                Some(&mut self.items[selected_index - 1])
             }
         } else {
             None
@@ -86,10 +86,10 @@ impl<T: Serialize> StatefulList<T> {
     pub fn get_after_selected(&mut self) -> Option<&mut T> {
         let len = self.items.len();
         if let Some(selected_index) = self.state.selected() {
-            if selected_index == len-1 {
+            if selected_index == len - 1 {
                 Some(&mut self.items[0])
             } else {
-                Some(&mut self.items[selected_index+1])
+                Some(&mut self.items[selected_index + 1])
             }
         } else {
             None

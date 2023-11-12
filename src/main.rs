@@ -157,7 +157,13 @@ pub fn create_app<'a>() -> App<'a> {
             button_tab_submenus.clone(),
         ),
     };
-    app.tabs = StatefulList::with_items(vec![button_tab, button_tab_2, button_tab_3, button_tab_4, button_tab_5]);
+    app.tabs = StatefulList::with_items(vec![
+        button_tab,
+        button_tab_2,
+        button_tab_3,
+        button_tab_4,
+        button_tab_5,
+    ]);
     app
 }
 

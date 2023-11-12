@@ -93,9 +93,15 @@ fn render_slider_page(frame: &mut Frame, app: &mut App, area: Rect) {}
 fn render_tabs(frame: &mut Frame, app: &mut App, area: Rect) {
     let titles = vec![
         "...",
-        app.tabs.get_before_selected().expect("No tab selected!").title,
+        app.tabs
+            .get_before_selected()
+            .expect("No tab selected!")
+            .title,
         app.tabs.get_selected().expect("No tab selected!").title,
-        app.tabs.get_after_selected().expect("No tab selected!").title,
+        app.tabs
+            .get_after_selected()
+            .expect("No tab selected!")
+            .title,
         "...",
     ];
     let tabs = Tabs::new(titles);

@@ -1,24 +1,11 @@
-pub mod app;
-pub use crate::app::*;
-pub mod gauge;
-pub use crate::gauge::*;
-pub mod list;
-pub use crate::list::*;
-pub mod slider;
-pub use crate::slider::*;
-pub mod submenu;
-pub use crate::submenu::*;
-pub mod tab;
-pub use crate::tab::*;
-pub mod table;
-pub use crate::table::*;
-pub mod toggle;
-pub use crate::toggle::*;
+mod containers;
+pub use containers::*;
+mod structures;
+pub use structures::*;
+
 pub mod ui;
 pub use crate::ui::*;
 
-pub const NX_TAB_ROWS: usize = 1;
-pub const NX_TAB_COLUMNS: usize = 15;
 pub const NX_SUBMENU_ROWS: usize = 8;
 pub const NX_SUBMENU_COLUMNS: usize = 4;
 

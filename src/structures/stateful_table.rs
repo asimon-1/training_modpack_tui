@@ -43,7 +43,7 @@ impl<T: Clone + Serialize> StatefulTable<T> {
     }
 }
 
-// Associated Functions
+// Initalization Functions
 impl<T: Clone + Serialize> StatefulTable<T> {
     pub fn new(rows: usize, cols: usize) -> Self {
         Self {
