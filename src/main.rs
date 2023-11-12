@@ -136,10 +136,28 @@ pub fn create_app<'a>() -> App<'a> {
         submenus: StatefulTable::with_items(
             NX_SUBMENU_ROWS,
             NX_SUBMENU_COLUMNS,
-            button_tab_submenus,
+            button_tab_submenus.clone(),
         ),
     };
-    app.tabs = StatefulList::with_items(vec![button_tab, button_tab_2, button_tab_3]);
+    let button_tab_4 = Tab {
+        id: "button",
+        title: "Button Config 4",
+        submenus: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            button_tab_submenus.clone(),
+        ),
+    };
+    let button_tab_5 = Tab {
+        id: "button",
+        title: "Button Config 5",
+        submenus: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            button_tab_submenus.clone(),
+        ),
+    };
+    app.tabs = StatefulList::with_items(vec![button_tab, button_tab_2, button_tab_3, button_tab_4, button_tab_5]);
     app
 }
 

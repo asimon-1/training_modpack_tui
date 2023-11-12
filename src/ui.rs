@@ -7,9 +7,9 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
     let layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1),
+            Constraint::Length(2),
             Constraint::Min(0),
-            Constraint::Length(1),
+            Constraint::Length(2),
         ])
         .split(frame.size());
 
@@ -36,7 +36,9 @@ pub fn render_ui(frame: &mut Frame, app: &mut App) {
 }
 
 fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect) {
-    let submenus = &mut app.selected_tab().submenus;
+    let selected_tab = app.selected_tab();
+    let submenus = &mut selected_tab.submenus;
+    let tab_title = selected_tab.title;
     // Convert the currently selected tab's grid of Option<SubMenu>'s
     // into an Iter<Row<Cell>> so that we can pass it into Table::new()
     let rows = submenus
@@ -53,7 +55,7 @@ fn render_submenu_page(frame: &mut Frame, app: &mut App, area: Rect) {
         .map(|row| Row::new(row));
 
     let table = Table::new(rows)
-        .block(Block::default().borders(Borders::ALL).title("Submenus:"))
+        .block(Block::default().borders(Borders::ALL).title(tab_title))
         .cell_highlight_style(Style::default().bg(Color::Gray))
         .widths(&[Constraint::Ratio(1, NX_SUBMENU_COLUMNS as u32); NX_SUBMENU_COLUMNS]);
 
@@ -89,10 +91,14 @@ fn render_toggle_page(frame: &mut Frame, app: &mut App, area: Rect) {
 fn render_slider_page(frame: &mut Frame, app: &mut App, area: Rect) {}
 
 fn render_tabs(frame: &mut Frame, app: &mut App, area: Rect) {
-    let titles = app.tabs.iter().map(|tab| tab.title).collect();
-    let tabs = Tabs::new(titles)
-        .select(app.tabs.state.selected().unwrap())
-        .highlight_style(Style::default().bg(Color::Gray));
+    let titles = vec![
+        "...",
+        app.tabs.get_before_selected().expect("No tab selected!").title,
+        app.tabs.get_selected().expect("No tab selected!").title,
+        app.tabs.get_after_selected().expect("No tab selected!").title,
+        "...",
+    ];
+    let tabs = Tabs::new(titles);
     frame.render_widget(tabs, area);
 }
 
