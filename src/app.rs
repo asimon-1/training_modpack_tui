@@ -1,7 +1,7 @@
 use serde::ser::Serializer;
 use serde::Serialize;
 
-use crate::{InputControl, StatefulTable, SubMenu, SubMenuType, Tab};
+use crate::{InputControl, StatefulList, SubMenu, SubMenuType, Tab};
 
 #[derive(PartialEq, Serialize)]
 pub enum AppPage {
@@ -26,14 +26,14 @@ pub enum AppPage {
 //       └─ Option<Slider>
 
 pub struct App<'a> {
-    pub tabs: StatefulTable<Tab<'a>>,
+    pub tabs: StatefulList<Tab<'a>>,
     pub page: AppPage,
 }
 
 impl<'a> App<'a> {
-    pub fn new(rows: usize, cols: usize) -> App<'a> {
+    pub fn new() -> App<'a> {
         App {
-            tabs: StatefulTable::new(rows, cols),
+            tabs: StatefulList::new(),
             page: AppPage::SUBMENU,
         }
     }
@@ -347,7 +347,9 @@ impl<'a> InputControl for App<'a> {
     }
     fn on_zl(&mut self) {
         match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_zl(),
+            AppPage::SUBMENU => {
+                self.tabs.previous();
+            }
             AppPage::TOGGLE => self
                 .tabs
                 .get_selected()
@@ -370,7 +372,7 @@ impl<'a> InputControl for App<'a> {
     }
     fn on_zr(&mut self) {
         match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_zr(),
+            AppPage::SUBMENU => self.tabs.next(),
             AppPage::TOGGLE => self
                 .tabs
                 .get_selected()

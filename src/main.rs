@@ -12,8 +12,8 @@ use std::{
 };
 
 use training_mod_tui_2::{
-    App, AppPage, InputControl, StatefulTable, SubMenu, SubMenuType, Tab, Toggle,
-    NX_SUBMENU_COLUMNS, NX_SUBMENU_ROWS, NX_TAB_COLUMNS, NX_TAB_ROWS,
+    App, AppPage, InputControl, StatefulList, StatefulTable, SubMenu, SubMenuType, Tab, Toggle,
+    NX_SUBMENU_COLUMNS, NX_SUBMENU_ROWS,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -59,21 +59,96 @@ pub fn create_app<'a>() -> App<'a> {
     };
     let b_button = Toggle {
         title: "B Button",
-        value: 1,
+        value: 0,
         max: 1,
     };
+    let x_button = Toggle {
+        title: "X Button",
+        value: 0,
+        max: 1,
+    };
+    let y_button = Toggle {
+        title: "Y Button",
+        value: 0,
+        max: 1,
+    };
+    let l_button = Toggle {
+        title: "L Button",
+        value: 0,
+        max: 1,
+    };
+    let r_button = Toggle {
+        title: "R Button",
+        value: 0,
+        max: 1,
+    };
+    let zl_button = Toggle {
+        title: "ZL Button",
+        value: 0,
+        max: 1,
+    };
+    let zr_button = Toggle {
+        title: "ZR Button",
+        value: 0,
+        max: 1,
+    };
+    let dpad_up_button = Toggle {
+        title: "Dpad Up Button",
+        value: 0,
+        max: 1,
+    };
+    let dpad_down_button = Toggle {
+        title: "Dpad Down Button",
+        value: 0,
+        max: 1,
+    };
+    let dpad_left_button = Toggle {
+        title: "Dpad Left Button",
+        value: 0,
+        max: 1,
+    };
+    let dpad_right_button = Toggle {
+        title: "Dpad Right Button",
+        value: 0,
+        max: 1,
+    };
+    let all_buttons = vec![
+        a_button,
+        b_button,
+        x_button,
+        y_button,
+        l_button,
+        r_button,
+        zl_button,
+        zr_button,
+        dpad_up_button,
+        dpad_down_button,
+        dpad_left_button,
+        dpad_right_button,
+    ];
+    let true_toggle = Toggle {
+        title: "True",
+        value: 0,
+        max: 1,
+    };
+    let false_toggle = Toggle {
+        title: "False",
+        value: 0,
+        max: 1,
+    };
+    let true_false_toggles = vec![true_toggle, false_toggle];
 
-    let mut app = App::new(NX_TAB_ROWS, NX_TAB_COLUMNS);
+    let mut app = App::new();
     let mut button_tab_submenus: Vec<SubMenu> = Vec::new();
     button_tab_submenus.push(SubMenu {
         title: "Menu Open Start Press",
         id: "menu_open_start_press",
-        help_text: "Help",
+        help_text: "Menu Open Start Press: Should pressing start open the menu?",
         submenu_type: SubMenuType::ToggleSingle,
         toggles: StatefulTable::with_items(
             NX_SUBMENU_ROWS,
             NX_SUBMENU_COLUMNS,
-            vec![a_button, b_button],
+            true_false_toggles.clone(),
         ),
         slider: None,
     });
@@ -82,7 +157,11 @@ pub fn create_app<'a>() -> App<'a> {
         id: "save_state_save",
         help_text: "Save State Save: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            all_buttons.clone(),
+        ),
         slider: None,
     });
 
@@ -91,7 +170,7 @@ pub fn create_app<'a>() -> App<'a> {
         id: "menu_open_start_press",
         help_text: "Menu Open Start Press: Hold start or press minus to open the mod menu. To open the original menu, press start.\nThe default menu open option is always available as Hold DPad Up + Press B.",
         submenu_type: SubMenuType::ToggleSingle,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, all_buttons.clone()),
         slider: None,
     });
     button_tab_submenus.push(SubMenu {
@@ -99,7 +178,11 @@ pub fn create_app<'a>() -> App<'a> {
         id: "save_state_save",
         help_text: "Save State Save: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            all_buttons.clone(),
+        ),
         slider: None,
     });
     button_tab_submenus.push(SubMenu {
@@ -107,7 +190,11 @@ pub fn create_app<'a>() -> App<'a> {
         id: "save_state_load",
         help_text: "Save State Load: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            all_buttons.clone(),
+        ),
         slider: None,
     });
     button_tab_submenus.push(SubMenu {
@@ -115,7 +202,11 @@ pub fn create_app<'a>() -> App<'a> {
         id: "input_record",
         help_text: "Input Record: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            all_buttons.clone(),
+        ),
         slider: None,
     });
     button_tab_submenus.push(SubMenu {
@@ -123,7 +214,11 @@ pub fn create_app<'a>() -> App<'a> {
         id: "input_playback",
         help_text: "Input Playback: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
-        toggles: StatefulTable::with_items(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS, Vec::new()),
+        toggles: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            all_buttons.clone(),
+        ),
         slider: None,
     });
 
@@ -133,10 +228,28 @@ pub fn create_app<'a>() -> App<'a> {
         submenus: StatefulTable::with_items(
             NX_SUBMENU_ROWS,
             NX_SUBMENU_COLUMNS,
+            button_tab_submenus.clone(),
+        ),
+    };
+    let button_tab_2 = Tab {
+        id: "button",
+        title: "Button Config 2",
+        submenus: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            button_tab_submenus.clone(),
+        ),
+    };
+    let button_tab_3 = Tab {
+        id: "button",
+        title: "Button Config 3",
+        submenus: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
             button_tab_submenus,
         ),
     };
-    app.tabs = StatefulTable::with_items(NX_TAB_ROWS, NX_TAB_COLUMNS, vec![button_tab]);
+    app.tabs = StatefulList::with_items(vec![button_tab, button_tab_2, button_tab_3]);
     app
 }
 

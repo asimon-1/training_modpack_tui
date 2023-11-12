@@ -16,6 +16,13 @@ impl<T: Serialize> IntoIterator for StatefulList<T> {
 }
 
 impl<T: Serialize> StatefulList<T> {
+    pub fn new() -> StatefulList<T> {
+        StatefulList {
+            state: ListState::default(),
+            items: Vec::new(),
+        }
+    }
+
     pub fn with_items(items: Vec<T>) -> StatefulList<T> {
         let mut state = ListState::default();
         // Enforce state as first of list
@@ -54,6 +61,14 @@ impl<T: Serialize> StatefulList<T> {
     pub fn unselect(&mut self) {
         self.state.select(None);
     }
+
+    pub fn get_selected(&mut self) -> Option<&mut T> {
+        if let Some(ind) = self.state.selected() {
+            Some(&mut self.items[ind])
+        } else {
+            None
+        }
+    }
 }
 
 impl<T: Serialize> Serialize for StatefulList<T> {
@@ -66,5 +81,11 @@ impl<T: Serialize> Serialize for StatefulList<T> {
             seq.serialize_element(e)?;
         }
         seq.end()
+    }
+}
+
+impl<T: Serialize> StatefulList<T> {
+    pub fn iter(&self) -> impl Iterator<Item = &T> + '_ {
+        self.items.iter()
     }
 }
