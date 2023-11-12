@@ -1,7 +1,7 @@
 use serde::ser::Serializer;
 use serde::Serialize;
 
-use crate::{InputControl, Slider, StatefulTable, Toggle};
+use crate::{InputControl, StatefulSlider, StatefulTable, Toggle};
 
 #[derive(Clone)]
 pub struct SubMenu<'a> {
@@ -10,7 +10,7 @@ pub struct SubMenu<'a> {
     pub help_text: &'a str,
     pub submenu_type: SubMenuType,
     pub toggles: StatefulTable<Toggle<'a>>,
-    pub slider: Option<Slider>,
+    pub slider: StatefulSlider, // TODO!() should we turn this back into an Option<StatefulSlider>?
 }
 
 impl<'a> Serialize for SubMenu<'a> {
@@ -18,8 +18,13 @@ impl<'a> Serialize for SubMenu<'a> {
     where
         S: Serializer,
     {
-        // TODO! Match on SubMenuType and Impl for Slider
-        self.toggles.serialize(serializer)
+        match self.submenu_type {
+            SubMenuType::ToggleMultiple | SubMenuType::ToggleSingle => {
+                self.toggles.serialize(serializer)
+            }
+            SubMenuType::Slider => self.slider.serialize(serializer),
+            SubMenuType::None => panic!("At the disco"),
+        }
     }
 }
 
@@ -35,11 +40,23 @@ impl<'a> InputControl for SubMenu<'a> {
                 self.selected_toggle().increment();
             }
             SubMenuType::ToggleMultiple => self.selected_toggle().increment(),
-            SubMenuType::Slider => {}
+            SubMenuType::Slider => self.slider.select_deselect(),
             SubMenuType::None => {}
         }
     }
-    fn on_b(&mut self) {}
+    fn on_b(&mut self) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle => {}
+            SubMenuType::ToggleMultiple => {}
+            SubMenuType::Slider => {
+                let slider = &mut self.slider;
+                if slider.is_handle_selected() {
+                    slider.deselect()
+                }
+            }
+            SubMenuType::None => {}
+        }
+    }
     fn on_x(&mut self) {}
     fn on_y(&mut self) {}
     fn on_up(&mut self) {
@@ -62,7 +79,14 @@ impl<'a> InputControl for SubMenu<'a> {
         match self.submenu_type {
             SubMenuType::ToggleSingle => self.toggles.prev_col_checked(),
             SubMenuType::ToggleMultiple => self.toggles.prev_col_checked(),
-            SubMenuType::Slider => {}
+            SubMenuType::Slider => {
+                let slider = &mut self.slider;
+                if slider.is_handle_selected() {
+                    slider.decrement_selected_slow();
+                } else {
+                    slider.switch_hover();
+                }
+            }
             SubMenuType::None => {}
         }
     }
@@ -70,7 +94,14 @@ impl<'a> InputControl for SubMenu<'a> {
         match self.submenu_type {
             SubMenuType::ToggleSingle => self.toggles.next_col_checked(),
             SubMenuType::ToggleMultiple => self.toggles.next_col_checked(),
-            SubMenuType::Slider => {}
+            SubMenuType::Slider => {
+                let slider = &mut self.slider;
+                if slider.is_handle_selected() {
+                    slider.increment_selected_slow();
+                } else {
+                    slider.switch_hover();
+                }
+            }
             SubMenuType::None => {}
         }
     }

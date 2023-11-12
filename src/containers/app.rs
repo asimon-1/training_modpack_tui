@@ -112,8 +112,13 @@ impl<'a> InputControl for App<'a> {
                 self.page = AppPage::SUBMENU;
             }
             AppPage::SLIDER => {
-                // Return to the list of submenus
-                self.page = AppPage::SUBMENU;
+                // Return to the list of submenus if we don't have a slider handle selected
+                let mut slider = self.selected_submenu().slider;
+                if !slider.is_handle_selected() {
+                    self.page = AppPage::SUBMENU;
+                } else {
+                    self.selected_submenu().on_b();
+                }
             }
             AppPage::CONFIRMATION => {
                 // Return to the list of submenus

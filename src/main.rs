@@ -12,8 +12,8 @@ use std::{
 };
 
 use training_mod_tui_2::{
-    App, AppPage, InputControl, StatefulList, StatefulTable, SubMenu, SubMenuType, Tab, Toggle,
-    NX_SUBMENU_COLUMNS, NX_SUBMENU_ROWS,
+    App, AppPage, InputControl, StatefulList, StatefulSlider, StatefulTable, SubMenu, SubMenuType,
+    Tab, Toggle, NX_SUBMENU_COLUMNS, NX_SUBMENU_ROWS,
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -60,7 +60,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Menu Open Start Press: Should pressing start open the menu?",
         submenu_type: SubMenuType::ToggleSingle,
         toggles: new_toggle_table(new_on_off()),
-        slider: None,
+        slider: StatefulSlider::new(),
     });
     button_tab_submenus.push(SubMenu {
         title: "Save State Save",
@@ -68,24 +68,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Save State Save: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: None,
-    });
-
-    button_tab_submenus.push(SubMenu {
-        title: "Menu Open Start Press",
-        id: "menu_open_start_press",
-        help_text: "Menu Open Start Press: Hold start or press minus to open the mod menu. To open the original menu, press start.\nThe default menu open option is always available as Hold DPad Up + Press B.",
-        submenu_type: SubMenuType::ToggleSingle,
-        toggles: new_toggle_table(new_button_combo()),
-        slider: None,
-    });
-    button_tab_submenus.push(SubMenu {
-        title: "Save State Save",
-        id: "save_state_save",
-        help_text: "Save State Save: Hold any one button and press the others to trigger",
-        submenu_type: SubMenuType::ToggleMultiple,
-        toggles: new_toggle_table(new_button_combo()),
-        slider: None,
+        slider: StatefulSlider::new(),
     });
     button_tab_submenus.push(SubMenu {
         title: "Save State Load",
@@ -93,7 +76,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Save State Load: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: None,
+        slider: StatefulSlider::new(),
     });
     button_tab_submenus.push(SubMenu {
         title: "Input Record",
@@ -101,7 +84,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Input Record: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: None,
+        slider: StatefulSlider::new(),
     });
     button_tab_submenus.push(SubMenu {
         title: "Input Playback",
@@ -109,7 +92,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Input Playback: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: None,
+        slider: StatefulSlider::new(),
     });
 
     let button_tab = Tab {
@@ -157,12 +140,50 @@ pub fn create_app<'a>() -> App<'a> {
             button_tab_submenus.clone(),
         ),
     };
+
+    let mut save_state_tab_submenus: Vec<SubMenu> = Vec::new();
+    save_state_tab_submenus.push(SubMenu {
+        title: "Mirroring",
+        id: "save_state_mirroring",
+        help_text:
+            "Mirroring: Flips save states in the left-right direction across the stage center",
+        submenu_type: SubMenuType::ToggleSingle,
+        toggles: new_toggle_table(new_on_off()),
+        slider: StatefulSlider::new(),
+    });
+    save_state_tab_submenus.push(SubMenu {
+        title: "Auto Save States",
+        id: "save_state_autoload",
+        help_text: "Auto Save States: Load save state when any fighter dies",
+        submenu_type: SubMenuType::ToggleSingle,
+        toggles: new_toggle_table(new_on_off()),
+        slider: StatefulSlider::new(),
+    });
+    save_state_tab_submenus.push(SubMenu {
+        title: "Dmg Range (CPU)",
+        id: "save_damage_limits_cpu",
+        help_text: "Limits on random damage to apply to the CPU when loading a save state",
+        submenu_type: SubMenuType::Slider,
+        toggles: StatefulTable::new(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS),
+        slider: StatefulSlider::new(),
+    });
+    let save_states_tab = Tab {
+        id: "save_state",
+        title: "Save States",
+        submenus: StatefulTable::with_items(
+            NX_SUBMENU_ROWS,
+            NX_SUBMENU_COLUMNS,
+            save_state_tab_submenus,
+        ),
+    };
+
     app.tabs = StatefulList::with_items(vec![
         button_tab,
         button_tab_2,
         button_tab_3,
         button_tab_4,
         button_tab_5,
+        save_states_tab,
     ]);
     app
 }
