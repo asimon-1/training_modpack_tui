@@ -14,83 +14,83 @@ fn tablestate_with(row: usize, col: usize) -> TableState {
 #[test]
 fn test_next_col_full() {
     let mut t = initialize_table(0, 0);
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), Some(1).as_ref());
+    assert_eq!(t.get_selected(), Some(1).as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), Some(2).as_ref());
+    assert_eq!(t.get_selected(), Some(2).as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
 }
 
 #[test]
 fn test_next_col_checked_full() {
     let mut t = initialize_table(0, 0);
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
     t.next_col_checked();
-    assert_eq!(t.get_selected(), Some(1).as_ref());
+    assert_eq!(t.get_selected(), Some(1).as_mut());
     t.next_col_checked();
-    assert_eq!(t.get_selected(), Some(2).as_ref());
+    assert_eq!(t.get_selected(), Some(2).as_mut());
     t.next_col_checked();
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
 }
 
 #[test]
 fn test_prev_col_full() {
     let mut t = initialize_table(0, 0);
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), Some(2).as_ref());
+    assert_eq!(t.get_selected(), Some(2).as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), Some(1).as_ref());
+    assert_eq!(t.get_selected(), Some(1).as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
 }
 
 #[test]
 fn test_prev_col_checked_full() {
     let mut t = initialize_table(0, 0);
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
     t.prev_col_checked();
-    assert_eq!(t.get_selected(), Some(2).as_ref());
+    assert_eq!(t.get_selected(), Some(2).as_mut());
     t.prev_col_checked();
-    assert_eq!(t.get_selected(), Some(1).as_ref());
+    assert_eq!(t.get_selected(), Some(1).as_mut());
     t.prev_col_checked();
-    assert_eq!(t.get_selected(), Some(0).as_ref());
+    assert_eq!(t.get_selected(), Some(0).as_mut());
 }
 
 #[test]
 fn test_next_col_short() {
     let mut t = initialize_table(1, 0);
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), Some(4).as_ref());
+    assert_eq!(t.get_selected(), Some(4).as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), None.as_ref());
+    assert_eq!(t.get_selected(), None.as_mut());
     t.next_col();
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
 }
 
 #[test]
 fn test_next_col_checked_short() {
     let mut t = initialize_table(1, 0);
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
     t.next_col_checked();
-    assert_eq!(t.get_selected(), Some(4).as_ref());
+    assert_eq!(t.get_selected(), Some(4).as_mut());
     t.next_col_checked();
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
 }
 
 #[test]
 fn test_prev_col_short() {
     let mut t = initialize_table(1, 0);
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), None.as_ref());
+    assert_eq!(t.get_selected(), None.as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), Some(4).as_ref());
+    assert_eq!(t.get_selected(), Some(4).as_mut());
     t.prev_col();
-    assert_eq!(t.get_selected(), Some(3).as_ref());
+    assert_eq!(t.get_selected(), Some(3).as_mut());
 }
 
 #[test]
@@ -117,8 +117,8 @@ fn test_table_with_items() {
 
 #[test]
 pub fn test_get_selected() {
-    let t = initialize_table(1, 1);
-    assert_eq!(t.get_selected(), Some(4).as_ref());
+    let mut t = initialize_table(1, 1);
+    assert_eq!(t.get_selected(), Some(4).as_mut());
 }
 
 #[test]
