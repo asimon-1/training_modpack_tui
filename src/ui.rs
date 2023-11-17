@@ -88,7 +88,7 @@ fn render_toggle_page(frame: &mut Frame, app: &mut App, area: Rect) {
 #[allow(dead_code, unused_variables)]
 fn render_slider_page(frame: &mut Frame, app: &mut App, area: Rect) {
     let submenu = app.selected_submenu();
-    let slider = submenu.slider;
+    let slider = submenu.slider.as_mut().expect("No slider selected!");
 
     // Double ended sliders are rendered as four distinct LineGauge widgets
     // 1. Minimum to Lower value

@@ -60,7 +60,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Menu Open Start Press: Should pressing start open the menu?",
         submenu_type: SubMenuType::ToggleSingle,
         toggles: new_toggle_table(new_on_off()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     button_tab_submenus.push(SubMenu {
         title: "Save State Save",
@@ -68,7 +68,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Save State Save: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     button_tab_submenus.push(SubMenu {
         title: "Save State Load",
@@ -76,7 +76,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Save State Load: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     button_tab_submenus.push(SubMenu {
         title: "Input Record",
@@ -84,7 +84,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Input Record: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     button_tab_submenus.push(SubMenu {
         title: "Input Playback",
@@ -92,7 +92,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Input Playback: Hold any one button and press the others to trigger",
         submenu_type: SubMenuType::ToggleMultiple,
         toggles: new_toggle_table(new_button_combo()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
 
     let button_tab = Tab {
@@ -149,7 +149,7 @@ pub fn create_app<'a>() -> App<'a> {
             "Mirroring: Flips save states in the left-right direction across the stage center",
         submenu_type: SubMenuType::ToggleSingle,
         toggles: new_toggle_table(new_on_off()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     save_state_tab_submenus.push(SubMenu {
         title: "Auto Save States",
@@ -157,7 +157,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Auto Save States: Load save state when any fighter dies",
         submenu_type: SubMenuType::ToggleSingle,
         toggles: new_toggle_table(new_on_off()),
-        slider: StatefulSlider::new(),
+        slider: None,
     });
     save_state_tab_submenus.push(SubMenu {
         title: "Dmg Range (CPU)",
@@ -165,7 +165,7 @@ pub fn create_app<'a>() -> App<'a> {
         help_text: "Limits on random damage to apply to the CPU when loading a save state",
         submenu_type: SubMenuType::Slider,
         toggles: StatefulTable::new(NX_SUBMENU_ROWS, NX_SUBMENU_COLUMNS),
-        slider: StatefulSlider::new(),
+        slider: Some(StatefulSlider::new()),
     });
     let save_states_tab = Tab {
         id: "save_state",

@@ -113,7 +113,11 @@ impl<'a> InputControl for App<'a> {
             }
             AppPage::SLIDER => {
                 // Return to the list of submenus if we don't have a slider handle selected
-                let mut slider = self.selected_submenu().slider;
+                let slider = self
+                    .selected_submenu()
+                    .slider
+                    .as_mut()
+                    .expect("No slider selected!");
                 if !slider.is_handle_selected() {
                     self.page = AppPage::SUBMENU;
                 } else {

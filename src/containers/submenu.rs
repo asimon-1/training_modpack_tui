@@ -10,7 +10,7 @@ pub struct SubMenu<'a> {
     pub help_text: &'a str,
     pub submenu_type: SubMenuType,
     pub toggles: StatefulTable<Toggle<'a>>,
-    pub slider: StatefulSlider, // TODO!() should we turn this back into an Option<StatefulSlider>?
+    pub slider: Option<StatefulSlider>,
 }
 
 impl<'a> Serialize for SubMenu<'a> {
@@ -40,7 +40,10 @@ impl<'a> InputControl for SubMenu<'a> {
                 self.selected_toggle().increment();
             }
             SubMenuType::ToggleMultiple => self.selected_toggle().increment(),
-            SubMenuType::Slider => self.slider.select_deselect(),
+            SubMenuType::Slider => {
+                let slider = self.slider.as_mut().expect("No slider selected!");
+                slider.select_deselect();
+            }
             SubMenuType::None => {}
         }
     }
@@ -49,7 +52,7 @@ impl<'a> InputControl for SubMenu<'a> {
             SubMenuType::ToggleSingle => {}
             SubMenuType::ToggleMultiple => {}
             SubMenuType::Slider => {
-                let slider = &mut self.slider;
+                let slider = self.slider.as_mut().expect("No slider selected!");
                 if slider.is_handle_selected() {
                     slider.deselect()
                 }
@@ -80,7 +83,7 @@ impl<'a> InputControl for SubMenu<'a> {
             SubMenuType::ToggleSingle => self.toggles.prev_col_checked(),
             SubMenuType::ToggleMultiple => self.toggles.prev_col_checked(),
             SubMenuType::Slider => {
-                let slider = &mut self.slider;
+                let slider = self.slider.as_mut().expect("No slider selected!");
                 if slider.is_handle_selected() {
                     slider.decrement_selected_slow();
                 } else {
@@ -95,7 +98,7 @@ impl<'a> InputControl for SubMenu<'a> {
             SubMenuType::ToggleSingle => self.toggles.next_col_checked(),
             SubMenuType::ToggleMultiple => self.toggles.next_col_checked(),
             SubMenuType::Slider => {
-                let slider = &mut self.slider;
+                let slider = self.slider.as_mut().expect("No slider selected!");
                 if slider.is_handle_selected() {
                     slider.increment_selected_slow();
                 } else {
