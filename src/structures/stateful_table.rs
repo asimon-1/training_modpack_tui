@@ -231,28 +231,6 @@ impl<T: Clone + Serialize> Serialize for StatefulTable<T> {
     }
 }
 
-// TODO!() Is this still needed?
-// impl<'de, T: Clone + Serialize + Deserialize<'de>>
-//     Deserialize<'de> for StatefulTable<T>
-// {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: Deserializer<'de>,
-//     {
-//         let items: Vec<T> = Vec::deserialize(deserializer)?;
-//         Ok(StatefulTable::with_items(rows????, cols????, items))
-//     }
-// }
-
-// TODO!() Is this still needed?
-// impl<T: Clone + Serialize> IntoIterator for StatefulTable<T> {
-//     type Item = T;
-//     type IntoIter = std::vec::IntoIter<Self::Item>;
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.as_vec().into_iter()
-//     }
-// }
-
 // Implement .iter() for StatefulTable
 pub struct StatefulTableIterator<'a, T: Clone + Serialize> {
     stateful_table: &'a StatefulTable<T>,
