@@ -12,7 +12,7 @@ fn tablestate_with(row: usize, col: usize) -> TableState {
 }
 
 #[test]
-fn test_next_col_full() {
+fn stateful_table_next_col_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.next_col();
@@ -24,7 +24,7 @@ fn test_next_col_full() {
 }
 
 #[test]
-fn test_next_col_checked_full() {
+fn stateful_table_next_col_checked_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.next_col_checked();
@@ -36,7 +36,7 @@ fn test_next_col_checked_full() {
 }
 
 #[test]
-fn test_prev_col_full() {
+fn stateful_table_prev_col_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.prev_col();
@@ -48,7 +48,7 @@ fn test_prev_col_full() {
 }
 
 #[test]
-fn test_prev_col_checked_full() {
+fn stateful_table_prev_col_checked_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.prev_col_checked();
@@ -60,7 +60,7 @@ fn test_prev_col_checked_full() {
 }
 
 #[test]
-fn test_next_col_short() {
+fn stateful_table_next_col_short() {
     let mut t = initialize_table(1, 0);
     assert_eq!(t.get_selected(), Some(&mut 3));
     t.next_col();
@@ -72,7 +72,7 @@ fn test_next_col_short() {
 }
 
 #[test]
-fn test_next_col_checked_short() {
+fn stateful_table_next_col_checked_short() {
     let mut t = initialize_table(1, 0);
     assert_eq!(t.get_selected(), Some(&mut 3));
     t.next_col_checked();
@@ -82,7 +82,7 @@ fn test_next_col_checked_short() {
 }
 
 #[test]
-fn test_prev_col_short() {
+fn stateful_table_prev_col_short() {
     let mut t = initialize_table(1, 0);
     assert_eq!(t.get_selected(), Some(&mut 3));
     t.prev_col();
@@ -94,21 +94,21 @@ fn test_prev_col_short() {
 }
 
 #[test]
-fn test_carriage_return_none() {
+fn stateful_table_carriage_return_none() {
     let mut t = initialize_table(1, 2);
     t.carriage_return();
     assert_eq!(t.state, tablestate_with(1, 1));
 }
 
 #[test]
-fn test_carriage_return_some() {
+fn stateful_table_carriage_return_some() {
     let mut t = initialize_table(1, 1);
     t.carriage_return();
     assert_eq!(t.state, tablestate_with(1, 1));
 }
 
 #[test]
-fn test_table_with_items() {
+fn stateful_table_table_with_items() {
     let items: Vec<u8> = vec![0, 1, 2, 3, 4];
     let t: StatefulTable<u8> = StatefulTable::with_items(2, 3, items);
     let u = initialize_table(0, 0);
@@ -116,13 +116,13 @@ fn test_table_with_items() {
 }
 
 #[test]
-fn test_get_selected() {
+fn stateful_table_get_selected() {
     let mut t = initialize_table(1, 1);
     assert_eq!(t.get_selected(), Some(&mut 4));
 }
 
 #[test]
-fn test_get() {
+fn stateful_table_get() {
     let t = initialize_table(1, 1);
     assert_eq!(t.get(0, 0), Some(&0));
     assert_eq!(t.get(0, 1), Some(&1));
@@ -135,7 +135,7 @@ fn test_get() {
 }
 
 #[test]
-fn test_get_by_idx() {
+fn stateful_table_get_by_idx() {
     let t = initialize_table(1, 1);
     assert_eq!(t.get_by_idx(0), Some(&0));
     assert_eq!(t.get_by_idx(1), Some(&1));
@@ -147,26 +147,26 @@ fn test_get_by_idx() {
 }
 
 #[test]
-fn test_len() {
+fn stateful_table_len() {
     let t = initialize_table(1, 1);
     assert_eq!(t.len(), 5);
 }
 
 #[test]
-fn test_full_len() {
+fn stateful_table_full_len() {
     let t = initialize_table(0, 0);
     assert_eq!(t.full_len(), 6);
 }
 
 #[test]
-fn test_serialize() {
+fn stateful_table_serialize() {
     let t = initialize_table(1, 1);
     let t_ser = serde_json::to_string(&t).unwrap();
     assert_eq!(&t_ser, "[0,1,2,3,4]");
 }
 
 #[test]
-fn test_new() {
+fn stateful_table_new() {
     let t: StatefulTable<u8> = StatefulTable::new(2, 3);
     let u: StatefulTable<u8> = StatefulTable::with_items(2, 3, vec![]);
     let v: StatefulTable<u8> = StatefulTable {
@@ -180,11 +180,11 @@ fn test_new() {
 }
 
 #[test]
-fn test_with_items() {
+fn stateful_table_with_items() {
     let t: StatefulTable<u8> = StatefulTable::with_items(2, 3, vec![1, 2]);
     let u: StatefulTable<u8> = StatefulTable {
         state: tablestate_with(0, 0),
-        items: vec![vec![Some(1), Some(2), None], vec![None;3]],
+        items: vec![vec![Some(1), Some(2), None], vec![None; 3]],
         rows: 2,
         cols: 3,
     };
@@ -192,8 +192,8 @@ fn test_with_items() {
 }
 
 #[test]
-fn test_select() {
-    let mut t = initialize_table(0,0);
+fn stateful_table_select() {
+    let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.select(0, 1);
     assert_eq!(t.get_selected(), Some(&mut 1));
@@ -208,7 +208,7 @@ fn test_select() {
 }
 
 #[test]
-fn test_get_mut() {
+fn stateful_table_get_mut() {
     let mut t = initialize_table(1, 1);
     assert_eq!(t.get_mut(0, 0), Some(&mut 0));
     assert_eq!(t.get_mut(0, 1), Some(&mut 1));
@@ -221,7 +221,7 @@ fn test_get_mut() {
 }
 
 #[test]
-fn test_get_by_idx_mut() {
+fn stateful_table_get_by_idx_mut() {
     let mut t = initialize_table(1, 1);
     assert_eq!(t.get_by_idx_mut(0), Some(&mut 0));
     assert_eq!(t.get_by_idx_mut(1), Some(&mut 1));
@@ -233,7 +233,7 @@ fn test_get_by_idx_mut() {
 }
 
 #[test]
-fn test_next_row_full() {
+fn stateful_table_next_row_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.next_row();
@@ -243,7 +243,7 @@ fn test_next_row_full() {
 }
 
 #[test]
-fn test_next_row_short() {
+fn stateful_table_next_row_short() {
     let mut t = initialize_table(0, 2);
     assert_eq!(t.get_selected(), Some(&mut 2));
     t.next_row();
@@ -253,7 +253,7 @@ fn test_next_row_short() {
 }
 
 #[test]
-fn test_next_row_checked_full() {
+fn stateful_table_next_row_checked_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.next_row_checked();
@@ -263,7 +263,7 @@ fn test_next_row_checked_full() {
 }
 
 #[test]
-fn test_next_row_checked_short() {
+fn stateful_table_next_row_checked_short() {
     let mut t = initialize_table(0, 2);
     assert_eq!(t.get_selected(), Some(&mut 2));
     t.next_row_checked();
@@ -273,7 +273,7 @@ fn test_next_row_checked_short() {
 }
 
 #[test]
-fn test_prev_row_full() {
+fn stateful_table_prev_row_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.prev_row();
@@ -283,7 +283,7 @@ fn test_prev_row_full() {
 }
 
 #[test]
-fn test_prev_row_short() {
+fn stateful_table_prev_row_short() {
     let mut t = initialize_table(0, 2);
     assert_eq!(t.get_selected(), Some(&mut 2));
     t.prev_row();
@@ -293,7 +293,7 @@ fn test_prev_row_short() {
 }
 
 #[test]
-fn test_prev_row_checked_full() {
+fn stateful_table_prev_row_checked_full() {
     let mut t = initialize_table(0, 0);
     assert_eq!(t.get_selected(), Some(&mut 0));
     t.prev_row_checked();
@@ -303,7 +303,7 @@ fn test_prev_row_checked_full() {
 }
 
 #[test]
-fn test_prev_row_checked_short() {
+fn stateful_table_prev_row_checked_short() {
     let mut t = initialize_table(0, 2);
     assert_eq!(t.get_selected(), Some(&mut 2));
     t.prev_row_checked();
@@ -313,7 +313,7 @@ fn test_prev_row_checked_short() {
 }
 
 #[test]
-fn test_iter() {
+fn stateful_table_iter() {
     let t = initialize_table(0, 0);
     let mut t_iter = t.iter();
     assert_eq!(t_iter.next(), Some(&0));
