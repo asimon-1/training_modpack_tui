@@ -1,7 +1,7 @@
 use serde::ser::Serializer;
 use serde::Serialize;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Toggle<'a> {
     pub title: &'a str,
     pub value: u8,

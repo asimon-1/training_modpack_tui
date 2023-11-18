@@ -116,7 +116,7 @@ impl<'a> InputControl for SubMenu<'a> {
 }
 
 impl<'a> SubMenu<'a> {
-    fn selected_toggle(&mut self) -> &mut Toggle<'a> {
+    pub fn selected_toggle(&mut self) -> &mut Toggle<'a> {
         self.toggles.get_selected().expect("No toggle selected!")
     }
 
