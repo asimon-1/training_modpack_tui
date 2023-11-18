@@ -1,6 +1,6 @@
 use serde::{Serialize, Serializer};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SliderState {
     LowerHover,
     UpperHover,
@@ -9,7 +9,7 @@ pub enum SliderState {
     None,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct StatefulSlider {
     pub state: SliderState,
     pub lower: u32,
