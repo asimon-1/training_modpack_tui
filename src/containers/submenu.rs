@@ -119,6 +119,33 @@ impl<'a> SubMenu<'a> {
     fn selected_toggle(&mut self) -> &mut Toggle<'a> {
         self.toggles.get_selected().expect("No toggle selected!")
     }
+
+    pub fn update_from_vec(&mut self, values: Vec<u8>) {
+        match self.submenu_type {
+            SubMenuType::ToggleSingle | SubMenuType::ToggleMultiple => {
+                for (idx, value) in values.iter().enumerate() {
+                    if let Some(toggle) = self.toggles.get_by_idx_mut(idx) {
+                        toggle.value = *value;
+                    }
+                }
+            }
+            SubMenuType::Slider => {
+                assert_eq!(
+                    values.len(),
+                    2,
+                    "Exactly two values need to be passed to submenu.set() for slider!"
+                );
+                if let Some(s) = self.slider {
+                    self.slider = Some(StatefulSlider {
+                        lower: values[0].into(),
+                        upper: values[1].into(),
+                        ..s
+                    });
+                }
+            }
+            SubMenuType::None => {}
+        }
+    }
 }
 
 #[derive(Clone, Copy, Serialize)]

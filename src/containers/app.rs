@@ -1,5 +1,6 @@
-use serde::ser::Serializer;
+use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
+use std::collections::HashMap;
 
 use crate::{InputControl, StatefulList, SubMenu, SubMenuType, Tab};
 
@@ -42,6 +43,22 @@ impl<'a> App<'a> {
         serde_json::to_string(&self).expect("Could not serialize the menu to JSON!")
     }
 
+    pub fn update_from_json(&mut self, json: &str) {
+        let all_settings: HashMap<String, Vec<u8>> =
+            serde_json::from_str(json).expect("Could not parse the json!");
+        for tab in self.tabs.iter_mut() {
+            for idx in 0..tab.submenus.len() {
+                // I don't like iterating by index here but implementation of iter_mut() is tough for StatefulTable
+                let submenu_opt = tab.submenus.get_by_idx_mut(idx);
+                if let Some(submenu) = submenu_opt {
+                    if let Some(val) = all_settings.get(submenu.title) {
+                        submenu.update_from_vec(val.clone());
+                    }
+                }
+            }
+        }
+    }
+
     pub fn selected_tab(&mut self) -> &mut Tab<'a> {
         self.tabs.get_selected().expect("No tab selected!")
     }
@@ -59,7 +76,16 @@ impl<'a> Serialize for App<'a> {
     where
         S: Serializer,
     {
-        self.tabs.serialize(serializer)
+        // Serializes as a mapping between submenu titles and values
+        // Need to iterate through tabs to avoid making a list of mappings
+        let len: usize = self.tabs.iter().map(|tab| tab.len()).sum();
+        let mut map = serializer.serialize_map(Some(len))?;
+        for tab in self.tabs.iter() {
+            for submenu in tab.submenus.iter() {
+                map.serialize_entry(submenu.title, submenu)?;
+            }
+        }
+        map.end()
     }
 }
 

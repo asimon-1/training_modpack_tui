@@ -10,6 +10,12 @@ pub struct Tab<'a> {
     pub submenus: StatefulTable<SubMenu<'a>>,
 }
 
+impl<'a> Tab<'a> {
+    pub fn len(&self) -> usize {
+        self.submenus.len()
+    }
+}
+
 impl<'a> Serialize for Tab<'a> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

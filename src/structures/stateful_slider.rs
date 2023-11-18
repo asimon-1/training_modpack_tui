@@ -16,8 +16,8 @@ pub struct StatefulSlider {
     pub upper: u32,
     pub min: u32,
     pub max: u32,
-    incr_amount_slow: u32,
-    incr_amount_fast: u32,
+    pub incr_amount_slow: u32,
+    pub incr_amount_fast: u32,
 }
 
 impl StatefulSlider {
