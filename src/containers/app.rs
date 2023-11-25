@@ -29,6 +29,8 @@ pub enum AppPage {
 pub struct App<'a> {
     pub tabs: StatefulList<Tab<'a>>,
     pub page: AppPage,
+    pub serialized_settings: String,
+    pub serialized_default_settings: String,
 }
 
 impl<'a> App<'a> {
@@ -36,6 +38,8 @@ impl<'a> App<'a> {
         App {
             tabs: StatefulList::new(),
             page: AppPage::SUBMENU,
+            serialized_settings: String::new(),
+            serialized_default_settings: String::new(),
         }
     }
 
@@ -43,13 +47,25 @@ impl<'a> App<'a> {
         serde_json::to_string(&self).expect("Could not serialize the menu to JSON!")
     }
 
+    pub fn save_settings(&mut self) {
+        self.serialized_settings = self.to_json();
+    }
+
+    pub fn save_default_settings(&mut self) {
+        self.serialized_default_settings = self.to_json();
+    }
+
+    pub fn load_defaults(&mut self) {
+        // TODO!() is there a way to do this without cloning?
+        let json = self.serialized_default_settings.clone();
+        self.update_from_json(&json);
+    }
+
     pub fn update_from_json(&mut self, json: &str) {
         let all_settings: HashMap<String, Vec<u8>> =
             serde_json::from_str(json).expect("Could not parse the json!");
         for tab in self.tabs.iter_mut() {
-            for idx in 0..tab.submenus.len() {
-                // I don't like iterating by index here but implementation of iter_mut() is tough for StatefulTable
-                let submenu_opt = tab.submenus.get_by_idx_mut(idx);
+            for submenu_opt in tab.submenus.iter_mut() {
                 if let Some(submenu) = submenu_opt {
                     if let Some(val) = all_settings.get(submenu.title) {
                         submenu.update_from_vec(val.clone());
@@ -158,51 +174,9 @@ impl<'a> InputControl for App<'a> {
         }
     }
     fn on_x(&mut self) {
-        match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_x(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_x(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_x(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
-        }
+        self.save_default_settings();
     }
-    fn on_y(&mut self) {
-        match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_y(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_y(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_y(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
-        }
-    }
+    fn on_y(&mut self) {}
     fn on_up(&mut self) {
         match self.page {
             AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_up(),
@@ -308,124 +282,30 @@ impl<'a> InputControl for App<'a> {
         }
     }
     fn on_start(&mut self) {
-        match self.page {
-            AppPage::SUBMENU => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .on_start(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_start(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_start(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
-        }
+        // Close menu
+        self.page = AppPage::CLOSE;
     }
     fn on_l(&mut self) {
-        match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_l(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_l(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_l(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
-        }
+        // Reset current selection to default
+        // TODO!() Confirmation
     }
     fn on_r(&mut self) {
-        match self.page {
-            AppPage::SUBMENU => self.tabs.get_selected().expect("No tab selected!").on_r(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_r(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_r(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
-        }
+        // Reset all settings to default
+        // TODO!() Confirmation
+        self.load_defaults();
     }
     fn on_zl(&mut self) {
         match self.page {
             AppPage::SUBMENU => {
                 self.tabs.previous();
             }
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_zl(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_zl(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
+            _ => {}
         }
     }
     fn on_zr(&mut self) {
         match self.page {
             AppPage::SUBMENU => self.tabs.next(),
-            AppPage::TOGGLE => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_zr(),
-            AppPage::SLIDER => self
-                .tabs
-                .get_selected()
-                .expect("No tab selected!")
-                .submenus
-                .get_selected()
-                .expect("No submenu selected!")
-                .on_zr(),
-            AppPage::CONFIRMATION => {}
-            AppPage::CLOSE => {}
+            _ => {}
         }
     }
 }
